@@ -1,56 +1,86 @@
-import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { Stack } from 'expo-router';
+import { useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
-import 'react-native-reanimated';
 
-import { useColorScheme } from '@/components/useColorScheme';
+import { useAuthStore } from '@/src/store/useAuthStore';
+import { useCardsStore } from '@/src/store/useCardsStore';
+import { useAccountsStore } from '@/src/store/useAccountsStore';
+import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
+import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { usePlannedPaymentsStore } from '@/src/store/usePlannedPaymentsStore';
+import {
+  ensureNotificationPermission,
+  ensureNotificationSetup,
+  rescheduleAllCardReminders,
+  reschedulePlannedPaymentReminders,
+} from '@/src/lib/notifications';
 
 export {
-  // Catch any errors thrown by the Layout component.
   ErrorBoundary,
 } from 'expo-router';
 
-export const unstable_settings = {
-  // Ensure that reloading on `/modal` keeps a back button present.
-  initialRouteName: '(tabs)',
-};
-
-// Prevent the splash screen from auto-hiding before asset loading is complete.
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {});
 
 export default function RootLayout() {
-  const [loaded, error] = useFonts({
-    SpaceMono: require('../assets/fonts/SpaceMono-Regular.ttf'),
-  });
-
-  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
-  useEffect(() => {
-    if (error) throw error;
-  }, [error]);
+  const isInitializing = useAuthStore((s) => s.isInitializing);
+  const session = useAuthStore((s) => s.session);
+  const init = useAuthStore((s) => s.init);
 
   useEffect(() => {
-    if (loaded) {
-      SplashScreen.hideAsync();
+    ensureNotificationSetup().then(() => ensureNotificationPermission());
+    init();
+  }, [init]);
+
+  useEffect(() => {
+    if (!isInitializing) {
+      SplashScreen.hideAsync().catch(() => {});
     }
-  }, [loaded]);
+  }, [isInitializing]);
 
-  if (!loaded) {
+  useAppForegroundReschedule(session != null);
+
+  if (isInitializing) {
     return null;
   }
 
-  return <RootLayoutNav />;
+  return (
+    <Stack>
+      <Stack.Protected guard={session != null}>
+        <Stack.Screen name="(app)" options={{ headerShown: false }} />
+      </Stack.Protected>
+      <Stack.Protected guard={session == null}>
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      </Stack.Protected>
+    </Stack>
+  );
 }
 
-function RootLayoutNav() {
-  const colorScheme = useColorScheme();
+function useAppForegroundReschedule(enabled: boolean) {
+  const appState = useRef(AppState.currentState);
 
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <Stack>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="modal" options={{ presentation: 'modal' }} />
-      </Stack>
-    </ThemeProvider>
-  );
+  useEffect(() => {
+    if (!enabled) return;
+
+    useSettingsStore.getState().fetchSettings();
+    useCardsStore.getState().fetchCards();
+    useAccountsStore.getState().fetchAccounts();
+    usePersonalDebtsStore.getState().fetchPersonalDebts();
+    usePlannedPaymentsStore.getState().fetchPlannedPayments();
+
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      const cameToForeground = appState.current.match(/inactive|background/) && nextState === 'active';
+      appState.current = nextState;
+      if (cameToForeground) {
+        const { notificationLeadDays } = useSettingsStore.getState();
+        rescheduleAllCardReminders(useCardsStore.getState().cards, notificationLeadDays);
+        reschedulePlannedPaymentReminders(
+          usePlannedPaymentsStore.getState().plannedPayments,
+          notificationLeadDays
+        );
+      }
+    });
+
+    return () => subscription.remove();
+  }, [enabled]);
 }

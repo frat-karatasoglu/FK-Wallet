@@ -1,16 +1,18 @@
 {
   "expo": {
-    "name": "FKWallet",
-    "slug": "FKWallet",
+    "name": "FK Wallet",
+    "slug": "fk-cuzdanim",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "fkwallet",
-    "userInterfaceStyle": "automatic",
+    "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fkwallet.app"
     },
     "android": {
+      "package": "com.fkwallet.app",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -29,14 +31,23 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/fk-logo.png",
+          "imageWidth": 220,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker"
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "a77f189a-5279-4883-a8a7-1f2f574c791a"
+      }
+    },
+    "owner": "fratkaratass-organization"
   }
 }
