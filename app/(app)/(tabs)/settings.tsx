@@ -85,6 +85,7 @@ export default function SettingsScreen() {
           </View>
         </View>
 
+        {access.status !== 'free' ? (
         <View style={styles.subscriptionCard}>
           <View style={styles.reminderHeader}>
             <View style={[styles.reminderIcon, access.status === 'premium' && styles.premiumIcon]}>
@@ -111,6 +112,7 @@ export default function SettingsScreen() {
             </Pressable>
           )}
         </View>
+        ) : null}
 
         <View style={styles.reminderCard}>
           <View style={styles.reminderHeader}>

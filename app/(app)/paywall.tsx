@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
+import { Redirect, useRouter } from 'expo-router';
 import type { PurchasesPackage } from 'react-native-purchases';
 
 import { PrimaryButton } from '@/src/components/PrimaryButton';
@@ -82,6 +82,9 @@ export default function PaywallScreen() {
     setIsRestoring(false);
     setMessage(error ?? 'Premium aboneliğin geri yüklendi.');
   }
+
+  // Abonelik modeli kapalıyken bu ekranın gösterilecek bir şeyi yok.
+  if (access.status === 'free') return <Redirect href="/" />;
 
   if (access.status === 'premium') {
     return (

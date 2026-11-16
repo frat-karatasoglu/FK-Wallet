@@ -49,11 +49,6 @@ PRIVACY AND SECURITY
 • Your data is stored privately in your account and only you can access it
 • Your data is not used for advertising and is never shared with third parties
 
-TRY IT FREE FOR 7 DAYS
-• Use every feature free for 7 days after signing up, no card required
-• When the trial ends you can still view your data; to add and edit entries, upgrade to a monthly or yearly Premium subscription
-• Subscriptions are managed through Google Play and can be cancelled at any time
-
 FK Wallet is not a banking app; it does not make payments or transfer money. It is a tracking tool designed to help you keep your budget and payment schedule in order.
 
 Feedback and suggestions: karatasoglufirat@gmail.com

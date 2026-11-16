@@ -9,6 +9,15 @@ import { getSupabaseClient } from '../lib/supabase';
 /** RevenueCat'teki yetki (entitlement) kimliği. */
 export const PREMIUM_ENTITLEMENT = 'premium';
 export const TRIAL_DAYS = 7;
+
+/**
+ * Abonelik modeli açık mı. Kapalıyken uygulama tamamen ücretsizdir: deneme süresi,
+ * Premium ekranı ve yazma kilidi devre dışı kalır, RevenueCat yapılandırılmaz.
+ * Açmak için EAS/.env'de EXPO_PUBLIC_SUBSCRIPTIONS_ENABLED=true tanımlanır.
+ * Not: Açarken mevcut kullanıcıların trial_started_at değeri kayıt tarihleri olduğu için
+ * hemen kilitlenirler; açmadan önce onlara yeni deneme süresi tanımlanmalı.
+ */
+export const SUBSCRIPTIONS_ENABLED = process.env.EXPO_PUBLIC_SUBSCRIPTIONS_ENABLED === 'true';
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 const API_KEY = Platform.select({
@@ -16,7 +25,7 @@ const API_KEY = Platform.select({
   ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_KEY,
 });
 
-export type AccessStatus = 'premium' | 'trial' | 'expired';
+export type AccessStatus = 'free' | 'premium' | 'trial' | 'expired';
 
 interface SubscriptionState {
   trialStartedAt: string | null;
@@ -49,6 +58,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   init: async (userId) => {
     if (get().userId === userId) return;
     set({ userId });
+    if (!SUBSCRIPTIONS_ENABLED) return;
     await loadTrialStart(set);
 
     if (!API_KEY) return;
@@ -81,6 +91,7 @@ export const useSubscriptionStore = create<SubscriptionState>((set, get) => ({
   },
 
   refresh: async () => {
+    if (!SUBSCRIPTIONS_ENABLED) return;
     await loadTrialStart(set);
     if (!configured) return;
     try {
@@ -148,6 +159,7 @@ export interface AccessInfo {
 }
 
 export function getAccessInfo(state: Pick<SubscriptionState, 'isPremium' | 'trialStartedAt'>, now = new Date()): AccessInfo {
+  if (!SUBSCRIPTIONS_ENABLED) return { status: 'free', canWrite: true, trialDaysLeft: 0, trialEndsAt: null };
   if (state.isPremium) return { status: 'premium', canWrite: true, trialDaysLeft: 0, trialEndsAt: null };
   // Deneme başlangıcı okunamadıysa (bağlantı yok vb.) kullanıcıyı kilitlemeyelim.
   if (!state.trialStartedAt) return { status: 'trial', canWrite: true, trialDaysLeft: TRIAL_DAYS, trialEndsAt: null };

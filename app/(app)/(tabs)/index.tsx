@@ -207,7 +207,7 @@ export default function DashboardScreen() {
           </Pressable>
         ) : null}
 
-        {access.status !== 'premium' ? (
+        {access.status === 'trial' || access.status === 'expired' ? (
           <Pressable
             style={({ pressed }) => [styles.trialBanner, access.status === 'expired' && styles.trialBannerExpired, pressed && { opacity: 0.8 }]}
             onPress={() => router.push('/paywall')}

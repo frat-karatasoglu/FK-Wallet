@@ -2,9 +2,12 @@ import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuthStore } from '@/src/store/useAuthStore';
+import { SUBSCRIPTIONS_ENABLED } from '@/src/store/useSubscriptionStore';
 import { FormField } from '@/src/components/FormField';
 import { PrimaryButton } from '@/src/components/PrimaryButton';
 import { colors, radius, spacing, typography } from '@/src/theme';
+
+const SUBSCRIPTION_NOTE = 'Premium aboneliğin varsa Google Play’den ayrıca iptal etmeyi unutma; hesabı silmek aboneliği iptal etmez.';
 
 function displayName(name?: unknown) {
   if (typeof name !== 'string' || !name.trim()) return '';
@@ -60,7 +63,8 @@ export default function ProfileScreen() {
   function handleDeleteAccount() {
     Alert.alert(
       'Hesabını sil',
-      'Hesabın ve tüm kayıtların (kartlar, hesaplar, borçlar, gelir/gider, planlı ödemeler) kalıcı olarak silinecek. Bu işlem geri alınamaz.\n\nPremium aboneliğin varsa Google Play’den ayrıca iptal etmeyi unutma; hesabı silmek aboneliği iptal etmez.',
+      'Hesabın ve tüm kayıtların (kartlar, hesaplar, borçlar, gelir/gider, planlı ödemeler) kalıcı olarak silinecek. Bu işlem geri alınamaz.' +
+        (SUBSCRIPTIONS_ENABLED ? `\n\n${SUBSCRIPTION_NOTE}` : ''),
       [
         { text: 'Vazgeç', style: 'cancel' },
         {
@@ -110,7 +114,7 @@ export default function ProfileScreen() {
       <View style={styles.dangerZone}>
         <Text style={styles.sectionLabel}>Hesabı sil</Text>
         <Text style={styles.dangerText}>
-          Hesabın ve tüm verilerin kalıcı olarak silinir. Premium aboneliğin varsa Google Play’den ayrıca iptal etmelisin.
+          Hesabın ve tüm verilerin kalıcı olarak silinir.{SUBSCRIPTIONS_ENABLED ? ` ${SUBSCRIPTION_NOTE}` : ''}
         </Text>
         {deleteError ? <Text style={styles.error}>{deleteError}</Text> : null}
         <PrimaryButton

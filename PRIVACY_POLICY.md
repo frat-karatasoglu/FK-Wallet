@@ -26,10 +26,6 @@ amacıyla kullanılır. Verileriniz reklam amacıyla kullanılmaz, üçüncü ta
 
 Verileriniz, Supabase (PostgreSQL tabanlı bulut veritabanı hizmeti) altyapısında saklanır. Her kullanıcı yalnızca kendi verilerine erişebilir; bu, veritabanı düzeyinde satır bazlı güvenlik (Row Level Security) politikalarıyla teknik olarak zorunlu kılınmıştır.
 
-## Abonelik ve Satın Almalar
-
-Uygulama, kayıttan itibaren 7 gün ücretsiz denenebilir; sonrasında yeni kayıt eklemek ve düzenlemek için Premium abonelik gerekir. Abonelik ödemeleri tamamen Google Play üzerinden alınır; kart veya ödeme bilgilerin bize ulaşmaz. Abonelik durumunu doğrulamak için RevenueCat (abonelik yönetim hizmeti) kullanılır; RevenueCat'e yalnızca anonim kullanıcı kimliğin ve Google Play'in bildirdiği satın alma bilgileri (ürün, tarih, abonelik durumu) iletilir. Aboneliğini istediğin zaman Google Play > Ödemeler ve abonelikler bölümünden iptal edebilirsin.
-
 ## Bildirimler
 
 Uygulama, kart son ödeme tarihleri ve planlanan ödemeler için cihazınızda yerel bildirimler zamanlar. Bu bildirimler cihazınızda oluşturulur ve gönderilir; herhangi bir üçüncü taraf bildirim sunucusuna kişisel veri gönderilmez.
@@ -37,8 +33,6 @@ Uygulama, kart son ödeme tarihleri ve planlanan ödemeler için cihazınızda y
 ## Verilerinizi Silme
 
 Hesabınızı ve tüm verilerinizi uygulama içinden silebilirsiniz: **Profil > Hesabımı Sil**. Bu işlem hesabınızı ve ona bağlı tüm kayıtları (kartlar, hesaplar, borçlar, gelir/gider kayıtları, planlanan ödemeler, profil bilgileri) sunucularımızdan kalıcı ve anında siler; geri alınamaz. Cihazınızda zamanlanmış hatırlatmalar da iptal edilir.
-
-Hesabı silmek Google Play aboneliğinizi otomatik olarak iptal etmez; aboneliğinizi Google Play > Ödemeler ve abonelikler bölümünden ayrıca iptal etmelisiniz. Google Play'in ve RevenueCat'in yasal yükümlülükler gereği tuttuğu satın alma kayıtları kendi politikalarına tabidir.
 
 Uygulamaya erişemiyorsanız silme talebinizi karatasoglufirat@gmail.com adresine, kayıtlı e-posta adresinizden gönderebilirsiniz; talebiniz en geç 30 gün içinde işleme alınır.
 
