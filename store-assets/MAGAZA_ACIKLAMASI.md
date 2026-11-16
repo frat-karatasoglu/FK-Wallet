@@ -25,7 +25,7 @@ SON ÖDEME GÜNÜNÜ KAÇIRMA
 
 GELİR VE GİDER TAKİBİ
 • Maaşını ve diğer gelirlerini kaydet; istersen doğrudan bir hesaba aktar
-• Harcamalarını kategoriye göre ekle
+• Harcamalarını kategoriye göre ekle; nakitten, hesaptan ya da kredi kartından ödendiğini seç, bakiyeler kendiliğinden güncellensin
 • Aylık toplam gelirini ve giderini kolayca karşılaştır, önceki aylara dön
 
 HESAPLARIN VE BORÇLARIN
@@ -45,9 +45,13 @@ SADE VE ANLAŞILIR
 
 GİZLİLİK VE GÜVENLİK
 • FK Wallet hiçbir bankaya bağlanmaz; tüm bilgiler senin girdiğin kadardır
-• Gerçek kart numarası veya CVV istenmez, saklanmaz; kartı yalnızca son 4 hanesiyle ayırt edersin
-• Verilerin hesabına özel olarak saklanır ve yalnızca sen erişebilirsin
+• Gerçek kart numarası veya CVV istenmez, saklanmaz; kartı yalnızca son 4 hanesiyle ayırt edersin• Verilerin hesabına özel olarak saklanır ve yalnızca sen erişebilirsin
 • Verilerin reklam amacıyla kullanılmaz, üçüncü taraflarla paylaşılmaz
+
+7 GÜN ÜCRETSİZ DENE
+• Kayıt olduktan sonra tüm özellikleri 7 gün boyunca ücretsiz kullan, kart bilgisi gerekmez
+• Deneme bittiğinde verilerini görmeye devam edersin; yeni kayıt eklemek ve düzenlemek için aylık veya yıllık Premium aboneliğe geçebilirsin
+• Abonelik Google Play üzerinden yönetilir, istediğin zaman iptal edebilirsin
 
 FK Wallet bir bankacılık uygulaması değildir; ödeme yapmaz, para transferi yapmaz. Bütçeni ve ödeme takvimini düzenli tutman için tasarlanmış bir takip aracıdır.
 

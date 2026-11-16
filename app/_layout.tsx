@@ -9,6 +9,7 @@ import { useAccountsStore } from '@/src/store/useAccountsStore';
 import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { usePlannedPaymentsStore } from '@/src/store/usePlannedPaymentsStore';
+import { useSubscriptionStore } from '@/src/store/useSubscriptionStore';
 import {
   ensureNotificationPermission,
   ensureNotificationSetup,
@@ -40,6 +41,13 @@ export default function RootLayout() {
   }, [isInitializing]);
 
   useAppForegroundReschedule(session != null);
+
+  // Deneme süresi ve Premium durumu oturum açan kullanıcıya göre yüklenir.
+  const userId = session?.user.id ?? null;
+  useEffect(() => {
+    if (userId) void useSubscriptionStore.getState().init(userId);
+    else void useSubscriptionStore.getState().reset();
+  }, [userId]);
 
   if (isInitializing) {
     return null;
@@ -73,6 +81,7 @@ function useAppForegroundReschedule(enabled: boolean) {
       const cameToForeground = appState.current.match(/inactive|background/) && nextState === 'active';
       appState.current = nextState;
       if (cameToForeground) {
+        void useSubscriptionStore.getState().refresh();
         const { notificationLeadDays } = useSettingsStore.getState();
         rescheduleAllCardReminders(useCardsStore.getState().cards, notificationLeadDays);
         reschedulePlannedPaymentReminders(

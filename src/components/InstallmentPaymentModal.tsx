@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Modal, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { KeyboardAvoidingView, Modal, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { FormField } from './FormField';
 import { PrimaryButton } from './PrimaryButton';
+import { PaymentSourcePicker, type PaymentSource } from './PaymentSourcePicker';
 import { formatDate } from '../lib/format';
 import { formatMoneyInput, moneyValueToInput, parseMoneyInput } from '../lib/moneyInput';
 import { addMonths, hasPaymentPlan, nextInstallmentAmount } from '../lib/paymentSchedule';
@@ -21,6 +22,7 @@ export function InstallmentPaymentModal({ debt, onClose }: InstallmentPaymentMod
   const markInstallmentPaid = usePersonalDebtsStore((state) => state.markInstallmentPaid);
   const [paidAmount, setPaidAmount] = useState('');
   const [nextAmount, setNextAmount] = useState('');
+  const [source, setSource] = useState<PaymentSource>({ kind: 'cash' });
   const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -52,7 +54,7 @@ export function InstallmentPaymentModal({ debt, onClose }: InstallmentPaymentMod
     }
     setError(null);
     setIsSaving(true);
-    const message = await markInstallmentPaid(plan.id, paid, isLastInstallment ? null : next);
+    const message = await markInstallmentPaid(plan.id, paid, isLastInstallment ? null : next, source);
     setIsSaving(false);
     if (message) {
       setError(message);
@@ -67,6 +69,7 @@ export function InstallmentPaymentModal({ debt, onClose }: InstallmentPaymentMod
         <Pressable style={StyleSheet.absoluteFill} onPress={onClose} />
         {plan ? (
           <View style={styles.sheet}>
+            <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
             <Text style={styles.title}>Taksit ödendi</Text>
             <Text style={styles.subtitle}>
               {plan.person_name} · {plan.installment_count ? `${installmentNumber}/${plan.installment_count}. taksit` : `${installmentNumber}. taksit`} · {formatDate(plan.next_payment_date)}
@@ -79,6 +82,8 @@ export function InstallmentPaymentModal({ debt, onClose }: InstallmentPaymentMod
               keyboardType="decimal-pad"
               placeholder="0"
             />
+
+            <PaymentSourcePicker value={source} onChange={setSource} />
 
             {!isLastInstallment ? (
               <>
@@ -99,6 +104,7 @@ export function InstallmentPaymentModal({ debt, onClose }: InstallmentPaymentMod
 
             <PrimaryButton title="Kaydet" onPress={handleSave} isLoading={isSaving} style={styles.saveButton} />
             <PrimaryButton title="Vazgeç" variant="outline" onPress={onClose} style={styles.cancelButton} />
+            </ScrollView>
           </View>
         ) : null}
       </KeyboardAvoidingView>
@@ -112,6 +118,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.white,
     borderTopLeftRadius: radius.lg,
     borderTopRightRadius: radius.lg,
+    maxHeight: '90%',
     padding: spacing.xl,
     paddingBottom: spacing.xxl,
   },

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { requireWriteAccess } from './useSubscriptionStore';
 import { getSupabaseClient } from '../lib/supabase';
 import { rescheduleAllCardReminders } from '../lib/notifications';
 import { useSettingsStore } from './useSettingsStore';
@@ -13,6 +14,7 @@ interface CardsState {
   updateCard: (id: string, card: Partial<UpdatableCardFields>) => Promise<string | null>;
   deleteCard: (id: string) => Promise<string | null>;
   applyCardPayment: (cardId: string, amount: number) => Promise<void>;
+  applyCardCharge: (cardId: string, amount: number) => Promise<void>;
 }
 
 async function reschedule(cards: Card[]) {
@@ -43,6 +45,8 @@ export const useCardsStore = create<CardsState>((set, get) => ({
   },
 
   addCard: async (card) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { data: userData } = await supabase.auth.getUser();
@@ -61,6 +65,8 @@ export const useCardsStore = create<CardsState>((set, get) => ({
   // güncel borcun bir parçasıdır). Güncel borç azaltıldığında ekstre de aynı
   // miktarda düşer; hangi yönden düzenlenirse düzenlensin ekstre <= borç kalır.
   updateCard: async (id, card) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const existingCard = get().cards.find((item) => item.id === id);
@@ -93,6 +99,8 @@ export const useCardsStore = create<CardsState>((set, get) => ({
   },
 
   deleteCard: async (id) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { error } = await supabase.from('cards').delete().eq('id', id);
@@ -113,6 +121,26 @@ export const useCardsStore = create<CardsState>((set, get) => ({
     const nextBalance = Math.max(0, Number(card.current_balance) - amount);
     const nextStatement =
       card.statement_amount != null ? Math.max(0, Number(card.statement_amount) - amount) : null;
+
+    await supabase
+      .from('cards')
+      .update({ current_balance: nextBalance, statement_amount: nextStatement })
+      .eq('id', cardId);
+
+    await get().fetchCards();
+  },
+
+  // Kredi kartıyla yapılan harcama güncel borcu artırır (negatif tutar geri alır).
+  // Ekstre değişmez; yalnızca borç azalırsa ekstre borcu geçmeyecek şekilde kırpılır.
+  applyCardCharge: async (cardId, amount) => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return;
+    const card = get().cards.find((c) => c.id === cardId);
+    if (!card) return;
+
+    const nextBalance = Math.max(0, Math.round((Number(card.current_balance) + amount) * 100) / 100);
+    const nextStatement =
+      card.statement_amount != null ? Math.min(Number(card.statement_amount), nextBalance) : null;
 
     await supabase
       .from('cards')

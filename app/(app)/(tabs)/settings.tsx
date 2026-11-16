@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { useAuthStore } from '@/src/store/useAuthStore';
+import { useAccessInfo } from '@/src/store/useSubscriptionStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { CURRENCY_OPTIONS, type CurrencyCode } from '@/src/lib/format';
 import { colors, spacing } from '@/src/theme';
@@ -24,7 +26,14 @@ export default function SettingsScreen() {
   const updateNotificationLeadDays = useSettingsStore((state) => state.updateNotificationLeadDays);
   const updateNotificationsEnabled = useSettingsStore((state) => state.updateNotificationsEnabled);
   const updateCurrency = useSettingsStore((state) => state.updateCurrency);
+  const router = useRouter();
+  const access = useAccessInfo();
   const [isSigningOut, setIsSigningOut] = useState(false);
+
+  function openManageSubscriptions() {
+    // Google Play'in abonelik yönetim sayfası; iptal ve ödeme yöntemi buradan değişir.
+    void Linking.openURL('https://play.google.com/store/account/subscriptions?package=com.fkwallet.app');
+  }
   const [isSavingLeadDays, setIsSavingLeadDays] = useState<number | null>(null);
   const [isTogglingNotifications, setIsTogglingNotifications] = useState(false);
   const [isSavingCurrency, setIsSavingCurrency] = useState<string | null>(null);
@@ -74,6 +83,33 @@ export default function SettingsScreen() {
               <Text style={styles.email} numberOfLines={1}>{session?.user.email}</Text>
             </View>
           </View>
+        </View>
+
+        <View style={styles.subscriptionCard}>
+          <View style={styles.reminderHeader}>
+            <View style={[styles.reminderIcon, access.status === 'premium' && styles.premiumIcon]}>
+              <Ionicons name="diamond-outline" size={20} color={access.status === 'premium' ? colors.white : colors.primary} />
+            </View>
+            <View style={styles.reminderTitleWrap}>
+              <Text style={styles.reminderTitle}>Abonelik</Text>
+              <Text style={[styles.enabledText, access.status === 'expired' && styles.expiredText]}>
+                {access.status === 'premium'
+                  ? 'Premium aktif'
+                  : access.status === 'trial'
+                    ? `Ücretsiz deneme · ${access.trialDaysLeft} gün kaldı`
+                    : 'Deneme süresi doldu'}
+              </Text>
+            </View>
+          </View>
+          {access.status === 'premium' ? (
+            <Pressable style={({ pressed }) => [styles.subscriptionButtonOutline, pressed && styles.pressed]} onPress={openManageSubscriptions}>
+              <Text style={styles.subscriptionButtonOutlineText}>Aboneliği yönet</Text>
+            </Pressable>
+          ) : (
+            <Pressable style={({ pressed }) => [styles.subscriptionButton, pressed && styles.pressed]} onPress={() => router.push('/paywall')}>
+              <Text style={styles.subscriptionButtonText}>Premium’a geç</Text>
+            </Pressable>
+          )}
         </View>
 
         <View style={styles.reminderCard}>
@@ -173,6 +209,13 @@ const styles = StyleSheet.create({
   name: { color: '#112c59', fontSize: 16, fontWeight: '700' },
   email: { color: '#70819f', fontSize: 13, marginTop: 1 },
   reminderCard: { padding: spacing.lg, borderRadius: 18, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
+  subscriptionCard: { padding: spacing.lg, borderRadius: 18, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4', marginBottom: spacing.md, gap: spacing.md },
+  premiumIcon: { backgroundColor: colors.income },
+  expiredText: { color: colors.overdue },
+  subscriptionButton: { minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  subscriptionButtonText: { color: colors.white, fontSize: 14, fontWeight: '700' },
+  subscriptionButtonOutline: { minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.primary },
+  subscriptionButtonOutlineText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
   reminderHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   reminderIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f5ff' },
   reminderTitleWrap: { flex: 1, minWidth: 0 },

@@ -1,4 +1,5 @@
 import { Stack, useRouter, useLocalSearchParams } from 'expo-router';
+import { useRedirectIfLocked } from '@/src/store/useSubscriptionStore';
 
 import { useTransactionsStore } from '@/src/store/useTransactionsStore';
 import { TransactionForm } from '@/src/components/TransactionForm';
@@ -11,6 +12,7 @@ const TITLES: Record<TransactionType, string> = {
 };
 
 export default function NewTransactionScreen() {
+  useRedirectIfLocked();
   const router = useRouter();
   const params = useLocalSearchParams<{ type?: TransactionType; cardId?: string }>();
   const addTransaction = useTransactionsStore((s) => s.addTransaction);

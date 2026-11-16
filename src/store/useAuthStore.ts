@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { create } from 'zustand';
 import { getSupabaseClient } from '../lib/supabase';
+import { cancelAllReminders } from '../lib/notifications';
 
 interface AuthState {
   session: Session | null;
@@ -9,6 +10,8 @@ interface AuthState {
   signIn: (email: string, password: string) => Promise<string | null>;
   signUp: (email: string, password: string, displayName: string) => Promise<string | null>;
   signOut: () => Promise<void>;
+  /** Hesabı ve tüm verileri kalıcı olarak siler; hata varsa mesaj döner. */
+  deleteAccount: () => Promise<string | null>;
   updateDisplayName: (displayName: string) => Promise<string | null>;
 }
 
@@ -59,6 +62,18 @@ export const useAuthStore = create<AuthState>((set) => ({
     const supabase = getSupabaseClient();
     if (!supabase) return;
     await supabase.auth.signOut();
+  },
+
+  deleteAccount: async () => {
+    const supabase = getSupabaseClient();
+    if (!supabase) return 'Supabase yapılandırılmamış.';
+    const { error } = await supabase.rpc('delete_my_account');
+    if (error) return 'Hesap silinemedi. İnternet bağlantını kontrol edip tekrar dene.';
+    await cancelAllReminders().catch(() => undefined);
+    // Kullanıcı sunucuda artık yok; oturumu yalnızca cihazdan temizle.
+    await supabase.auth.signOut({ scope: 'local' }).catch(() => undefined);
+    set({ session: null });
+    return null;
   },
 
   // updateUser bir "USER_UPDATED" auth event'i tetikler; init()'teki

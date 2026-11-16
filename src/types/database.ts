@@ -10,6 +10,8 @@ export type CardColor =
 
 export type TransactionType = 'income' | 'card_payment' | 'expense';
 
+export type PaymentSourceType = 'cash' | 'account' | 'card';
+
 export interface Profile {
   id: string;
   display_name: string | null;
@@ -51,6 +53,11 @@ export interface Transaction {
   account_id: string | null;
   /** Taksit ödemesiyse bağlı olduğu borç. */
   debt_id?: string | null;
+  /**
+   * Gider/kart ödemesinin nereden ödendiği. Boşsa (eski kayıt) hiçbir bakiye etkilenmez.
+   * cash: nakit, account: account_id'deki hesap, card: card_id'deki kredi kartı (yalnızca gider).
+   */
+  payment_source?: PaymentSourceType | null;
   created_at: string;
 }
 

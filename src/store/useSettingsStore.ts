@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { requireWriteAccess } from './useSubscriptionStore';
 import { getSupabaseClient } from '../lib/supabase';
 import { setCurrency, type CurrencyCode } from '../lib/format';
 
@@ -57,6 +58,8 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
   },
 
   updateCashBalance: async (value) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { data: userData } = await supabase.auth.getUser();

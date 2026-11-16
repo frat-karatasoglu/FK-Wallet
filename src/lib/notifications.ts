@@ -4,6 +4,7 @@ import { computeCardDates } from './cardDates';
 import { formatCurrency } from './format';
 import { hasPaymentPlan, nextInstallmentAmount, parseDateString } from './paymentSchedule';
 import { useSettingsStore } from '../store/useSettingsStore';
+import { getAccessInfo, useSubscriptionStore } from '../store/useSubscriptionStore';
 import type { Card, PersonalDebt, PlannedPayment } from '../types/database';
 
 const CARD_LEAD_PREFIX = 'card-due-';
@@ -73,8 +74,19 @@ export async function cancelAllReminders(): Promise<void> {
   await Notifications.cancelAllScheduledNotificationsAsync();
 }
 
+// Hatırlatmalar; kullanıcı kapatmadıysa ve deneme/Premium erişimi sürüyorsa kurulur.
+// Deneme bitip Premium alınmadıysa bekleyen hatırlatmalar da iptal edilir.
+async function remindersAllowed(): Promise<boolean> {
+  if (!useSettingsStore.getState().notificationsEnabled) return false;
+  if (!getAccessInfo(useSubscriptionStore.getState()).canWrite) {
+    await cancelAllReminders();
+    return false;
+  }
+  return true;
+}
+
 export async function rescheduleAllCardReminders(cards: Card[], leadDays: number): Promise<void> {
-  if (!useSettingsStore.getState().notificationsEnabled) return;
+  if (!(await remindersAllowed())) return;
   if (!(await ensureNotificationPermission())) return;
 
   const ids = new Set(cards.map((c) => c.id));
@@ -108,7 +120,7 @@ export async function reschedulePlannedPaymentReminders(
   payments: PlannedPayment[],
   leadDays: number
 ): Promise<void> {
-  if (!useSettingsStore.getState().notificationsEnabled) return;
+  if (!(await remindersAllowed())) return;
   if (!(await ensureNotificationPermission())) return;
 
   const open = payments.filter((p) => !p.is_paid);
@@ -137,7 +149,7 @@ export async function reschedulePlannedPaymentReminders(
 }
 
 export async function rescheduleDebtReminders(debts: PersonalDebt[], leadDays: number): Promise<void> {
-  if (!useSettingsStore.getState().notificationsEnabled) return;
+  if (!(await remindersAllowed())) return;
   if (!(await ensureNotificationPermission())) return;
 
   const planned = debts.filter((debt) => !debt.is_paid && hasPaymentPlan(debt));

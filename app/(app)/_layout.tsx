@@ -16,6 +16,7 @@ export default function AppLayout() {
 
       <Stack.Screen name="profile" options={{ title: 'Profil' }} />
       <Stack.Screen name="notifications" options={{ title: 'Bildirimler' }} />
+      <Stack.Screen name="paywall" options={{ presentation: 'modal', title: 'Premium' }} />
 
       <Stack.Screen name="income" options={{ title: 'Gelirim' }} />
       <Stack.Screen name="expenses" options={{ title: 'Giderim' }} />

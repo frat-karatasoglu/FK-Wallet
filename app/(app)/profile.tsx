@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { FormField } from '@/src/components/FormField';
@@ -15,6 +15,7 @@ export default function ProfileScreen() {
   const session = useAuthStore((s) => s.session);
   const updateDisplayName = useAuthStore((s) => s.updateDisplayName);
   const signOut = useAuthStore((s) => s.signOut);
+  const deleteAccount = useAuthStore((s) => s.deleteAccount);
 
   const currentName = displayName(session?.user.user_metadata.display_name);
   const [name, setName] = useState(currentName);
@@ -22,6 +23,8 @@ export default function ProfileScreen() {
   const [info, setInfo] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   const initial = (name || session?.user.email || '?').charAt(0).toLocaleUpperCase('tr-TR');
 
@@ -42,6 +45,35 @@ export default function ProfileScreen() {
   async function handleSignOut() {
     setIsSigningOut(true);
     await signOut();
+  }
+
+  async function runDelete() {
+    setDeleteError(null);
+    setIsDeleting(true);
+    const message = await deleteAccount();
+    if (message) {
+      setIsDeleting(false);
+      setDeleteError(message);
+    }
+  }
+
+  function handleDeleteAccount() {
+    Alert.alert(
+      'Hesabını sil',
+      'Hesabın ve tüm kayıtların (kartlar, hesaplar, borçlar, gelir/gider, planlı ödemeler) kalıcı olarak silinecek. Bu işlem geri alınamaz.\n\nPremium aboneliğin varsa Google Play’den ayrıca iptal etmeyi unutma; hesabı silmek aboneliği iptal etmez.',
+      [
+        { text: 'Vazgeç', style: 'cancel' },
+        {
+          text: 'Devam',
+          style: 'destructive',
+          onPress: () =>
+            Alert.alert('Emin misin?', 'Silinen veriler geri getirilemez.', [
+              { text: 'Vazgeç', style: 'cancel' },
+              { text: 'Hesabımı Sil', style: 'destructive', onPress: runDelete },
+            ]),
+        },
+      ],
+    );
   }
 
   return (
@@ -74,6 +106,21 @@ export default function ProfileScreen() {
         isLoading={isSigningOut}
         style={styles.signOutButton}
       />
+
+      <View style={styles.dangerZone}>
+        <Text style={styles.sectionLabel}>Hesabı sil</Text>
+        <Text style={styles.dangerText}>
+          Hesabın ve tüm verilerin kalıcı olarak silinir. Premium aboneliğin varsa Google Play’den ayrıca iptal etmelisin.
+        </Text>
+        {deleteError ? <Text style={styles.error}>{deleteError}</Text> : null}
+        <PrimaryButton
+          title="Hesabımı Sil"
+          variant="danger"
+          onPress={handleDeleteAccount}
+          isLoading={isDeleting}
+          style={styles.deleteButton}
+        />
+      </View>
     </ScrollView>
   );
 }
@@ -115,4 +162,13 @@ const styles = StyleSheet.create({
   info: { color: colors.income, marginTop: spacing.sm, fontSize: 13 },
   saveButton: { marginTop: spacing.lg },
   signOutButton: { width: '100%' },
+  dangerZone: {
+    width: '100%',
+    marginTop: spacing.xxl,
+    paddingTop: spacing.lg,
+    borderTopWidth: 1,
+    borderTopColor: colors.slate100,
+  },
+  dangerText: { fontSize: 13, color: colors.slate800, marginTop: spacing.xs, lineHeight: 18 },
+  deleteButton: { marginTop: spacing.md },
 });

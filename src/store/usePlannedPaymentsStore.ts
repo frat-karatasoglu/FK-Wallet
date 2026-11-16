@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { requireWriteAccess } from './useSubscriptionStore';
 import { getSupabaseClient } from '../lib/supabase';
 import { reschedulePlannedPaymentReminders } from '../lib/notifications';
 import { addMonths, plannedRepeatInterval, toDateString } from '../lib/paymentSchedule';
@@ -44,6 +45,8 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>((set, get) =
   },
 
   addPlannedPayment: async (payment) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { data: userData } = await supabase.auth.getUser();
@@ -59,6 +62,8 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>((set, get) =
   },
 
   updatePlannedPayment: async (id, payment) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { error } = await supabase.from('planned_payments').update(payment).eq('id', id);
@@ -69,6 +74,8 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>((set, get) =
   },
 
   deletePlannedPayment: async (id) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { error } = await supabase.from('planned_payments').delete().eq('id', id);
@@ -81,6 +88,8 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>((set, get) =
   // Ödendi işaretlemek hem gider hareketi oluşturur hem de tekrar eden ödemeyi
   // aralığı kadar (1/3/6/12 ay) ileri taşır; tekrar etmiyorsa ödendi olarak kapatır.
   markAsPaid: async (id) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { data: userData } = await supabase.auth.getUser();

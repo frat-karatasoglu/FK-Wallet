@@ -1,7 +1,10 @@
 import { create } from 'zustand';
+import { requireWriteAccess } from './useSubscriptionStore';
 
 import { getSupabaseClient } from '../lib/supabase';
 import { rescheduleDebtReminders } from '../lib/notifications';
+import { applyBalanceEffect } from '../lib/balanceEffects';
+import { paymentSourceFields, type PaymentSource } from '../lib/paymentSource';
 import { addMonths, hasPaymentPlan, toDateString } from '../lib/paymentSchedule';
 import { useSettingsStore } from './useSettingsStore';
 import type { NewPersonalDebt, PersonalDebt } from '../types/database';
@@ -18,7 +21,8 @@ interface PersonalDebtsState {
   markInstallmentPaid: (
     id: string,
     paidAmount: number,
-    nextInstallment?: number | null
+    nextInstallment: number | null,
+    source: PaymentSource
   ) => Promise<string | null>;
 }
 
@@ -51,6 +55,8 @@ export const usePersonalDebtsStore = create<PersonalDebtsState>((set, get) => ({
   },
 
   addPersonalDebt: async (debt) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { data: userData } = await supabase.auth.getUser();
@@ -64,6 +70,8 @@ export const usePersonalDebtsStore = create<PersonalDebtsState>((set, get) => ({
   },
 
   updatePersonalDebt: async (id, debt) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { error } = await supabase.from('personal_debts').update(debt).eq('id', id);
@@ -73,6 +81,8 @@ export const usePersonalDebtsStore = create<PersonalDebtsState>((set, get) => ({
   },
 
   deletePersonalDebt: async (id) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { error } = await supabase.from('personal_debts').delete().eq('id', id);
@@ -82,6 +92,8 @@ export const usePersonalDebtsStore = create<PersonalDebtsState>((set, get) => ({
   },
 
   markAsPaid: async (id) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { error } = await supabase.from('personal_debts').update({ is_paid: true }).eq('id', id);
@@ -94,7 +106,9 @@ export const usePersonalDebtsStore = create<PersonalDebtsState>((set, get) => ({
   // kalan borç o kadar düşer, sonraki ödeme tarihi plan aralığı kadar ileri kayar.
   // Taksit tutarı dönemden döneme değişebildiği için sonraki taksit tutarı da
   // isteğe bağlı güncellenir. Son taksitte borç kapanır.
-  markInstallmentPaid: async (id, paidAmount, nextInstallment) => {
+  markInstallmentPaid: async (id, paidAmount, nextInstallment, source) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { data: userData } = await supabase.auth.getUser();
@@ -111,10 +125,14 @@ export const usePersonalDebtsStore = create<PersonalDebtsState>((set, get) => ({
     const isFinished =
       remaining <= 0 || (debt.installment_count != null && paidInstallments >= debt.installment_count);
 
-    const { error: transactionError } = await supabase.from('transactions').insert({
-      user_id: userData.user.id,
-      type: 'expense',
+    const transaction = {
+      type: 'expense' as const,
       amount: payment,
+      ...paymentSourceFields(source),
+    };
+    const { error: transactionError } = await supabase.from('transactions').insert({
+      ...transaction,
+      user_id: userData.user.id,
       occurred_on: toDateString(new Date()),
       category: debt.person_name,
       debt_id: debt.id,
@@ -123,6 +141,7 @@ export const usePersonalDebtsStore = create<PersonalDebtsState>((set, get) => ({
         : `Taksit ${paidInstallments}`,
     });
     if (transactionError) return transactionError.message;
+    await applyBalanceEffect(transaction, 1);
 
     const { error } = await supabase
       .from('personal_debts')

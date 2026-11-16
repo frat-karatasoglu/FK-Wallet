@@ -15,6 +15,7 @@ import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
 import { usePlannedPaymentsStore } from '@/src/store/usePlannedPaymentsStore';
 import { useTransactionsStore } from '@/src/store/useTransactionsStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
+import { useAccessInfo } from '@/src/store/useSubscriptionStore';
 import { cardPalette, colors, radius, spacing } from '@/src/theme';
 import type { Card, Transaction } from '@/src/types/database';
 
@@ -59,6 +60,7 @@ export default function DashboardScreen() {
   const plannedPayments = usePlannedPaymentsStore((state) => state.plannedPayments);
   const fetchPlannedPayments = usePlannedPaymentsStore((state) => state.fetchPlannedPayments);
   const cashBalance = useSettingsStore((state) => state.cashBalance);
+  const access = useAccessInfo();
 
   const refresh = useCallback(() => {
     void useSettingsStore.getState().fetchSettings();
@@ -202,6 +204,19 @@ export default function DashboardScreen() {
               {formatCurrency(upcomingCard.statement_amount ?? upcomingCard.current_balance)}
             </Text>
             <Ionicons name="chevron-forward" size={22} color={colors.slate400} />
+          </Pressable>
+        ) : null}
+
+        {access.status !== 'premium' ? (
+          <Pressable
+            style={({ pressed }) => [styles.trialBanner, access.status === 'expired' && styles.trialBannerExpired, pressed && { opacity: 0.8 }]}
+            onPress={() => router.push('/paywall')}
+          >
+            <Ionicons name="diamond-outline" size={16} color={access.status === 'expired' ? colors.overdue : colors.primary} />
+            <Text style={[styles.trialBannerText, access.status === 'expired' && styles.trialBannerTextExpired]} numberOfLines={1}>
+              {access.status === 'expired' ? 'Deneme süren doldu · Premium’a geç' : `Ücretsiz deneme · ${access.trialDaysLeft} gün kaldı`}
+            </Text>
+            <Text style={[styles.trialBannerAction, access.status === 'expired' && styles.trialBannerTextExpired]}>Premium ›</Text>
           </Pressable>
         ) : null}
 
@@ -397,6 +412,21 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e6eaf2',
   },
+  trialBanner: {
+    marginHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.md,
+    backgroundColor: colors.primaryLight,
+  },
+  trialBannerExpired: { backgroundColor: colors.overdueBg },
+  trialBannerText: { flex: 1, color: colors.primary, fontSize: 13, fontWeight: '600' },
+  trialBannerTextExpired: { color: colors.overdue },
+  trialBannerAction: { color: colors.primary, fontSize: 13, fontWeight: '800' },
   netWorthLabel: { color: '#63738d', fontSize: 12, fontWeight: '600' },
   netWorthValue: { color: colors.income, fontSize: 26, fontWeight: '800', marginTop: 2 },
   netWorthValueNegative: { color: colors.overdue },

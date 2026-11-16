@@ -13,6 +13,12 @@ import { FormField } from './FormField';
 import { PrimaryButton } from './PrimaryButton';
 import { DateField } from './DateField';
 import { CategoryPicker } from './CategoryPicker';
+import {
+  PaymentSourcePicker,
+  paymentSourceFields,
+  paymentSourceFromFields,
+  type PaymentSource,
+} from './PaymentSourcePicker';
 import { useCardsStore } from '../store/useCardsStore';
 import { useAccountsStore } from '../store/useAccountsStore';
 import { formatMoneyInput, moneyValueToInput, parseMoneyInput } from '../lib/moneyInput';
@@ -62,7 +68,33 @@ export function TransactionForm({
   const [category, setCategory] = useState(initialValues?.category ?? '');
   const [customCategory, setCustomCategory] = useState(initialValues?.category ?? '');
   const [note, setNote] = useState(initialValues?.note ?? '');
-  const [cardId, setCardId] = useState<string | null>(initialValues?.card_id ?? null);
+  const [cardId, setCardId] = useState<string | null>(
+    initialValues?.type === 'expense' ? null : initialValues?.card_id ?? null
+  );
+  const [source, setSource] = useState<PaymentSource>(
+    initialValues ? paymentSourceFromFields(initialValues) : { kind: 'cash' }
+  );
+  // Bu özellikten önce kaydedilmiş bir gider/kart ödemesi düzenlenirken kaynak
+  // seçilmediyse dokunmayalım; aksi halde eski bir kayıt birden nakitten düşerdi.
+  const isLegacyRecord = Boolean(initialValues?.amount) && !initialValues?.payment_source;
+  const [sourceTouched, setSourceTouched] = useState(!isLegacyRecord);
+
+  function changeSource(next: PaymentSource) {
+    setSource(next);
+    setSourceTouched(true);
+  }
+
+  function sourceFieldsForType(): Pick<NewTransaction, 'card_id' | 'account_id' | 'payment_source'> {
+    if (type === 'income') return { card_id: null, account_id: accountId, payment_source: null };
+    if (type === 'card_payment') {
+      if (!sourceTouched) return { card_id: cardId, account_id: null, payment_source: null };
+      return source.kind === 'account'
+        ? { card_id: cardId, account_id: source.id, payment_source: 'account' }
+        : { card_id: cardId, account_id: null, payment_source: 'cash' };
+    }
+    if (!sourceTouched) return { card_id: null, account_id: null, payment_source: null };
+    return paymentSourceFields(source);
+  }
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -86,8 +118,7 @@ export function TransactionForm({
       occurred_on: toDateString(occurredOn),
       category: category.trim() || null,
       note: note.trim() || null,
-      card_id: type === 'card_payment' ? cardId : null,
-      account_id: type === 'income' ? accountId : null,
+      ...sourceFieldsForType(),
     });
     setIsSubmitting(false);
     if (message) setError(message);
@@ -197,12 +228,22 @@ export function TransactionForm({
                 );
               })}
             </View>
-            {accountId === null ? (
-              <Text style={styles.warning}>
-                Nakit seçtin: hiçbir hesabın bakiyesi değişmeyecek.
-              </Text>
-            ) : null}
+            <Text style={styles.hint}>
+              {accountId === null ? 'Elindeki nakde eklenir.' : 'Seçtiğin hesabın bakiyesine eklenir.'}
+            </Text>
           </View>
+        ) : null}
+
+        {type === 'expense' || (type === 'card_payment' && cards.length > 0) ? (
+          <PaymentSourcePicker
+            label={type === 'card_payment' ? 'Ödemeyi nereden yaptın?' : 'Nereden ödendi?'}
+            value={source}
+            onChange={changeSource}
+            allowCards={type === 'expense'}
+          />
+        ) : null}
+        {!sourceTouched && type !== 'income' ? (
+          <Text style={styles.hint}>Bu kayıt eski; bir kaynak seçmezsen hiçbir bakiye değişmez.</Text>
         ) : null}
 
         <FormField
@@ -319,6 +360,11 @@ const styles = StyleSheet.create({
   warning: {
     fontSize: 13,
     color: colors.dueSoon,
+  },
+  hint: {
+    fontSize: 12,
+    color: colors.slate500,
+    marginTop: spacing.xs,
   },
   error: {
     color: colors.overdue,

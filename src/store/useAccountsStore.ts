@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { requireWriteAccess } from './useSubscriptionStore';
 
 import { getSupabaseClient } from '../lib/supabase';
 import type { Account, NewAccount } from '../types/database';
@@ -36,6 +37,8 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
   },
 
   addAccount: async (account) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { data: userData } = await supabase.auth.getUser();
@@ -53,6 +56,8 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
   },
 
   updateAccount: async (id, account) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     let { error } = await supabase.from('accounts').update(account).eq('id', id);
@@ -66,6 +71,8 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
   },
 
   deleteAccount: async (id) => {
+    const blocked = requireWriteAccess();
+    if (blocked) return blocked;
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
     const { error } = await supabase.from('accounts').delete().eq('id', id);

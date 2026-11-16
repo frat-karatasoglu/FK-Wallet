@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
+import { useRedirectIfLocked } from '@/src/store/useSubscriptionStore';
 
 import { useCardsStore } from '@/src/store/useCardsStore';
 import { CardForm } from '@/src/components/CardForm';
 import type { NewCard } from '@/src/types/database';
 
 export default function NewCardScreen() {
+  useRedirectIfLocked();
   const router = useRouter();
   const addCard = useCardsStore((s) => s.addCard);
 

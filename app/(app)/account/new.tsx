@@ -1,10 +1,12 @@
 import { useRouter } from 'expo-router';
+import { useRedirectIfLocked } from '@/src/store/useSubscriptionStore';
 
 import { AccountForm } from '@/src/components/AccountForm';
 import { useAccountsStore } from '@/src/store/useAccountsStore';
 import type { NewAccount } from '@/src/types/database';
 
 export default function NewAccountScreen() {
+  useRedirectIfLocked();
   const router = useRouter();
   const addAccount = useAccountsStore((state) => state.addAccount);
 

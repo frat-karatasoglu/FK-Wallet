@@ -36,6 +36,8 @@ export default function CardDetailScreen() {
       .from('transactions')
       .select('*')
       .eq('card_id', id)
+      // Karttan yapılan harcamalar da card_id taşır; burada yalnızca borç ödemeleri listelenir.
+      .eq('type', 'card_payment')
       .order('occurred_on', { ascending: false });
     setHistory((data ?? []) as Transaction[]);
     setIsLoadingHistory(false);
