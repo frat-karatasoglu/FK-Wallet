@@ -9,6 +9,7 @@ import { UrgencyBadge } from '@/src/components/UrgencyBadge';
 import { EmptyState } from '@/src/components/EmptyState';
 import { colors, radius, spacing, typography } from '@/src/theme';
 import { formatCurrency, formatDate } from '@/src/lib/format';
+import { intervalLabel, parseDateString, plannedRepeatInterval } from '@/src/lib/paymentSchedule';
 import type { PlannedPayment } from '@/src/types/database';
 
 export default function PlannedPaymentsScreen() {
@@ -78,15 +79,18 @@ export default function PlannedPaymentsScreen() {
               onPress={() => router.push(`/planned/${item.id}/edit`)}
             >
               <View style={styles.rowTop}>
-                <Text style={styles.rowTitle}>{item.title}</Text>
+                <Text style={styles.rowTitle} numberOfLines={1}>{item.title}</Text>
                 <UrgencyBadge
-                  date={new Date(item.due_date)}
+                  date={parseDateString(item.due_date)}
                   dueSoonThresholdDays={notificationLeadDays}
                 />
               </View>
               <Text style={styles.rowSub}>
                 {formatDate(item.due_date)}
-                {item.repeat_monthly ? ' · her ay tekrar' : ''}
+                {(() => {
+                  const interval = plannedRepeatInterval(item);
+                  return interval ? ` · ${intervalLabel(interval).toLocaleLowerCase('tr-TR')} tekrar` : '';
+                })()}
               </Text>
               <Text style={styles.rowAmount}>{formatCurrency(item.amount)}</Text>
             </Pressable>
@@ -119,7 +123,7 @@ export default function PlannedPaymentsScreen() {
                   style={styles.paidRow}
                   onPress={() => router.push(`/planned/${payment.id}/edit`)}
                 >
-                  <Text style={styles.paidTitle}>{payment.title}</Text>
+                  <Text style={styles.paidTitle} numberOfLines={1}>{payment.title}</Text>
                   <Text style={styles.paidAmount}>{formatCurrency(payment.amount)}</Text>
                 </Pressable>
               ))}

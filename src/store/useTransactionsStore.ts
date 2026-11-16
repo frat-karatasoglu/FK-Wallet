@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { getSupabaseClient } from '../lib/supabase';
 import { useCardsStore } from './useCardsStore';
 import { useAccountsStore } from './useAccountsStore';
+import { useSettingsStore } from './useSettingsStore';
 import type { NewTransaction, Transaction } from '../types/database';
 
 function monthRange(reference: Date = new Date()) {
@@ -17,6 +18,28 @@ function toDateString(date: Date): string {
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
+}
+
+async function fetchTransaction(id: string): Promise<Transaction | null> {
+  const supabase = getSupabaseClient();
+  if (!supabase) return null;
+  const { data } = await supabase.from('transactions').select('*').eq('id', id).maybeSingle();
+  return (data as Transaction | null) ?? null;
+}
+
+// Gelir bir hesaba aktarıldıysa o hesabın, nakit tutulduysa nakit bakiyesinin
+// değişmesi gerekir. sign = 1 ekler, -1 geri alır (düzenleme/silme).
+async function applyIncomeEffect(
+  transaction: Pick<Transaction, 'type' | 'amount' | 'account_id'>,
+  sign: 1 | -1
+) {
+  if (transaction.type !== 'income') return;
+  const amount = Number(transaction.amount) * sign;
+  if (transaction.account_id) {
+    await useAccountsStore.getState().applyIncome(transaction.account_id, amount);
+  } else {
+    await useSettingsStore.getState().applyCashDelta(amount);
+  }
 }
 
 interface TransactionsFilter {
@@ -109,9 +132,7 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
     if (transaction.type === 'card_payment' && transaction.card_id) {
       await useCardsStore.getState().applyCardPayment(transaction.card_id, transaction.amount);
     }
-    if (transaction.type === 'income' && transaction.account_id) {
-      await useAccountsStore.getState().applyIncome(transaction.account_id, transaction.amount);
-    }
+    await applyIncomeEffect(transaction, 1);
 
     await get().fetchTransactions();
     await get().fetchDateRange();
@@ -121,8 +142,15 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
   updateTransaction: async (id, transaction) => {
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
+    const previous = await fetchTransaction(id);
     const { error } = await supabase.from('transactions').update(transaction).eq('id', id);
     if (error) return error.message;
+
+    // Gelirin tutarı ya da gittiği yer (hesap/nakit) değiştiyse eski etkiyi geri al, yenisini uygula.
+    if (previous) {
+      await applyIncomeEffect(previous, -1);
+      await applyIncomeEffect({ ...previous, ...transaction }, 1);
+    }
 
     await get().fetchTransactions();
     await get().fetchDateRange();
@@ -132,8 +160,11 @@ export const useTransactionsStore = create<TransactionsState>((set, get) => ({
   deleteTransaction: async (id) => {
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
+    const previous = await fetchTransaction(id);
     const { error } = await supabase.from('transactions').delete().eq('id', id);
     if (error) return error.message;
+
+    if (previous) await applyIncomeEffect(previous, -1);
 
     await get().fetchTransactions();
     await get().fetchDateRange();

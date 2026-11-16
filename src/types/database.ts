@@ -49,6 +49,8 @@ export interface Transaction {
   note: string | null;
   card_id: string | null;
   account_id: string | null;
+  /** Taksit ödemesiyse bağlı olduğu borç. */
+  debt_id?: string | null;
   created_at: string;
 }
 
@@ -61,6 +63,8 @@ export interface PlannedPayment {
   amount: number;
   due_date: string;
   repeat_monthly: boolean;
+  /** 0 = tekrar yok; 1, 3, 6 veya 12 ayda bir. Eski kayıtlarda sadece repeat_monthly dolu olabilir. */
+  repeat_interval_months: RepeatInterval;
   is_paid: boolean;
   note: string | null;
   created_at: string;
@@ -83,14 +87,24 @@ export type NewAccount = Omit<Account, 'id' | 'user_id' | 'created_at'>;
 
 export type DebtCategory = 'person' | 'rent' | 'bill' | 'loan' | 'other';
 
+export type PaymentInterval = 1 | 3 | 6 | 12;
+export type RepeatInterval = 0 | PaymentInterval;
+
 export interface PersonalDebt {
   id: string;
   user_id: string;
   person_name: string;
   category: DebtCategory;
+  /** Kalan borç. */
   amount: number;
   note: string | null;
   is_paid: boolean;
+  /** Ödeme planı alanları; plan yoksa hepsi null (paid_installments 0). */
+  installment_amount: number | null;
+  payment_interval_months: PaymentInterval | null;
+  next_payment_date: string | null;
+  installment_count: number | null;
+  paid_installments: number;
   created_at: string;
 }
 

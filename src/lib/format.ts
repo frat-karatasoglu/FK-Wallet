@@ -42,7 +42,13 @@ const dateFormatter = new Intl.DateTimeFormat('tr-TR', {
 });
 
 export function formatDate(date: Date | string): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
+  // "2027-05-15" gibi sadece tarih içeren metinler UTC sayılmasın; yerel gün olarak oku.
+  const d =
+    typeof date === 'string'
+      ? /^\d{4}-\d{2}-\d{2}$/.test(date)
+        ? new Date(Number(date.slice(0, 4)), Number(date.slice(5, 7)) - 1, Number(date.slice(8, 10)))
+        : new Date(date)
+      : date;
   return dateFormatter.format(d);
 }
 

@@ -4,13 +4,17 @@ import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { formatCurrency } from '@/src/lib/format';
+import { formatCurrency, formatDate } from '@/src/lib/format';
+import { DEBT_CATEGORIES } from '@/src/lib/debtCategories';
+import { hasPaymentPlan, nextInstallmentAmount } from '@/src/lib/paymentSchedule';
 import { AppHeader } from '@/src/components/AppHeader';
 import { CardCarousel } from '@/src/components/CardCarousel';
 import { AccountCard } from '@/src/components/AccountCard';
+import { InlineMoneyEditor } from '@/src/components/InlineMoneyEditor';
 import { useAccountsStore } from '@/src/store/useAccountsStore';
 import { useCardsStore } from '@/src/store/useCardsStore';
 import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
+import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { colors, spacing } from '@/src/theme';
 
 type WalletTab = 'cards' | 'accounts' | 'debts';
@@ -31,6 +35,8 @@ export default function WalletScreen() {
   const fetchAccounts = useAccountsStore((state) => state.fetchAccounts);
   const debts = usePersonalDebtsStore((state) => state.personalDebts);
   const fetchDebts = usePersonalDebtsStore((state) => state.fetchPersonalDebts);
+  const cashBalance = useSettingsStore((state) => state.cashBalance);
+  const updateCashBalance = useSettingsStore((state) => state.updateCashBalance);
   const [activeTab, setActiveTab] = useState<WalletTab>('cards');
 
   // Cüzdanım'a her dönüşte Kartlarım sekmesinden ve en üstten başla;
@@ -41,6 +47,7 @@ export default function WalletScreen() {
     void fetchCards();
     void fetchAccounts();
     void fetchDebts();
+    void useSettingsStore.getState().fetchSettings();
   }, [fetchAccounts, fetchCards, fetchDebts]));
 
   const cardDebt = useMemo(() => cards.reduce((sum, card) => sum + Number(card.current_balance), 0), [cards]);
@@ -71,7 +78,14 @@ export default function WalletScreen() {
 
         {activeTab === 'accounts' ? (
           <>
-            <WalletSummary icon="business-outline" title="Toplam hesap bakiyesi" value={formatCurrency(accountBalance)} caption={accounts.length ? `${accounts.length} hesap` : 'Hesap ekle'} tone="blue" />
+            <WalletSummary icon="business-outline" title="Toplam hesap bakiyesi" value={formatCurrency(accountBalance + cashBalance)} caption={accounts.length ? `${accounts.length} hesap + nakit` : 'Nakit'} tone="blue" />
+            <View style={styles.cashBox}>
+              <View style={[styles.itemIcon, styles.cashIcon]}><Ionicons name="cash-outline" size={22} color={colors.income} /></View>
+              <View style={styles.cashEditor}>
+                <InlineMoneyEditor label="Nakit (elimdeki)" value={cashBalance} placeholder="Nakit gir" onSave={updateCashBalance} />
+              </View>
+            </View>
+            <Text style={styles.cashHint}>"Nakit olarak tut" seçtiğin gelirler buraya eklenir. Harcadıkça tutarı güncelleyebilirsin.</Text>
             <View style={styles.accountCards}>{accounts.map((account) => (
               <AccountCard
                 key={account.id}
@@ -86,12 +100,35 @@ export default function WalletScreen() {
         {activeTab === 'debts' ? (
           <>
             <WalletSummary icon="people-outline" title="Toplam borç" value={formatCurrency(debtTotal)} caption={openDebts.length ? `${openDebts.length} açık borç` : 'Açık borç yok'} tone="red" />
-            <View style={styles.list}>{openDebts.map((debt) => <Pressable key={debt.id} style={({ pressed }) => [styles.itemCard, styles.debtItem, pressed && styles.pressed]} onPress={() => router.push(`/debt/${debt.id}/edit` as never)}>
-              <View style={[styles.itemIcon, styles.debtIcon]}><Ionicons name="people-outline" size={23} color={colors.overdue} /></View>
-              <View style={styles.itemCopy}><Text style={styles.itemTitle}>{debt.person_name}</Text><Text style={styles.itemLabel}>{debt.note || 'Açık borç'}</Text><Text style={styles.itemValue}>{formatCurrency(debt.amount)}</Text></View>
-              <Ionicons name="chevron-forward" size={19} color={colors.slate400} />
-              <View style={styles.itemFooter}><Text style={styles.footerSimple}>Kalan borç</Text><Text style={styles.footerSimpleValue}>{formatCurrency(debt.amount)}</Text></View>
-            </Pressable>)}</View>
+            <View style={styles.list}>{openDebts.map((debt) => {
+              const meta = DEBT_CATEGORIES[debt.category ?? 'other'];
+              const plan = hasPaymentPlan(debt) ? debt : null;
+              return (
+                <Pressable
+                  key={debt.id}
+                  style={({ pressed }) => [styles.debtCard, pressed && styles.pressed]}
+                  onPress={() => router.push((plan ? `/debt/${debt.id}` : `/debt/${debt.id}/edit`) as never)}
+                >
+                  <View style={styles.debtRow}>
+                    <View style={[styles.itemIcon, { backgroundColor: meta.background }]}><Ionicons name={meta.icon} size={21} color={meta.color} /></View>
+                    <View style={styles.itemCopy}>
+                      <Text style={styles.itemTitle} numberOfLines={1}>{debt.person_name}</Text>
+                      <Text style={styles.itemLabel} numberOfLines={1}>{meta.label}{debt.note ? ` · ${debt.note}` : ''}</Text>
+                    </View>
+                    <Text style={styles.debtAmount} numberOfLines={1}>{formatCurrency(debt.amount)}</Text>
+                    <Ionicons name="chevron-forward" size={18} color={colors.slate400} />
+                  </View>
+                  {plan ? (
+                    <View style={styles.debtFooter}>
+                      <Text style={styles.debtFooterText} numberOfLines={1}>
+                        Sonraki: <Text style={styles.debtFooterStrong}>{formatDate(plan.next_payment_date)}</Text> · {formatCurrency(nextInstallmentAmount(plan))}
+                      </Text>
+                      {plan.installment_count ? <Text style={styles.debtFooterText}>{plan.paid_installments}/{plan.installment_count}</Text> : null}
+                    </View>
+                  ) : null}
+                </Pressable>
+              );
+            })}</View>
             <AddButton title="Borç ekle" onPress={() => router.push('/debt/new')} />
           </>
         ) : null}
@@ -115,7 +152,18 @@ const styles = StyleSheet.create({
   header: { marginBottom: spacing.lg },
   tabs: { flexDirection: 'row', padding: 3, borderRadius: 9, backgroundColor: '#e8f0ff', marginBottom: spacing.md }, tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 7 }, tabSelected: { backgroundColor: colors.primary }, tabText: { color: '#5f7190', fontSize: 11, fontWeight: '700' }, tabTextSelected: { color: colors.white },
   summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: 12, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4', marginBottom: spacing.md }, summaryIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' }, summaryLabel: { color: '#61738f', fontSize: 11, fontWeight: '600' }, summaryValue: { color: '#112c59', fontSize: 21, fontWeight: '800', marginTop: 1 }, summaryValueRed: { color: colors.overdue }, summaryCaption: { color: '#8291a8', fontSize: 11, marginTop: 1 },
-  carouselWrap: { marginHorizontal: -spacing.lg }, list: { gap: spacing.sm }, itemCard: { minHeight: 118, borderRadius: 12, padding: spacing.md, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4', flexDirection: 'row', alignItems: 'flex-start', gap: spacing.sm }, itemIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center' }, debtIcon: { backgroundColor: colors.overdueBg }, itemCopy: { flex: 1, minWidth: 0 }, itemTitle: { color: '#112c59', fontSize: 14, fontWeight: '800' }, itemLabel: { color: '#71819c', fontSize: 10, marginTop: 3 }, itemValue: { color: '#112c59', fontSize: 16, fontWeight: '800', marginTop: 1 }, itemFooter: { position: 'absolute', bottom: 0, left: spacing.md, right: spacing.md, height: 34, borderTopWidth: 1, borderColor: '#edf1f7', flexDirection: 'row' }, footerSimple: { color: '#71819c', fontSize: 9, paddingTop: 5 }, footerSimpleValue: { color: '#112c59', fontSize: 12, fontWeight: '800', marginLeft: 'auto', paddingTop: 4 }, debtItem: { minHeight: 108 },
+  carouselWrap: { marginHorizontal: -spacing.lg }, list: { gap: spacing.sm },
+  itemIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }, itemCopy: { flex: 1, minWidth: 0 }, itemTitle: { color: '#112c59', fontSize: 14, fontWeight: '800' }, itemLabel: { color: '#71819c', fontSize: 11, marginTop: 2 },
+  debtCard: { borderRadius: 12, padding: spacing.md, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
+  debtRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
+  debtAmount: { color: '#112c59', fontSize: 15, fontWeight: '800', maxWidth: '40%' },
+  debtFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderColor: '#edf1f7' },
+  debtFooterText: { color: '#71819c', fontSize: 11, flexShrink: 1 },
+  debtFooterStrong: { color: '#112c59', fontWeight: '700' },
+  cashBox: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: 12, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
+  cashIcon: { backgroundColor: colors.incomeBg },
+  cashEditor: { flex: 1 },
+  cashHint: { color: '#8291a8', fontSize: 11, marginTop: spacing.xs, marginBottom: spacing.md },
   accountCards: { gap: spacing.md },
   addButton: { marginTop: spacing.md, minHeight: 42, borderRadius: 9, borderWidth: 1.5, borderColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, backgroundColor: colors.white }, addButtonText: { color: colors.primary, fontSize: 14, fontWeight: '800' },
 });

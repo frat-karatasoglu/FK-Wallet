@@ -1,10 +1,16 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { colors } from '@/src/theme';
 
+const TAB_BAR_HEIGHT = 62;
+
 export default function TabsLayout() {
+  // Android'in 3 tuşlu gezinme çubuğu (ve iPhone ana ekran çizgisi) uygulamanın
+  // üstüne çizilir; sabit yükseklik verince sekme çubuğu onun altında kalıyordu.
+  const insets = useSafeAreaInsets();
   return (
     <Tabs
       screenOptions={{
@@ -14,7 +20,10 @@ export default function TabsLayout() {
         headerShadowVisible: false,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.slate400,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          { height: TAB_BAR_HEIGHT + insets.bottom, paddingBottom: Math.max(insets.bottom, 6) },
+        ],
         tabBarLabelStyle: styles.tabLabel,
       }}
     >
@@ -67,7 +76,6 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   tabBar: {
-    height: 68,
     paddingTop: 7,
     backgroundColor: colors.white,
     borderTopColor: colors.slate200,

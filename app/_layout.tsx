@@ -14,6 +14,7 @@ import {
   ensureNotificationSetup,
   rescheduleAllCardReminders,
   reschedulePlannedPaymentReminders,
+  rescheduleDebtReminders,
 } from '@/src/lib/notifications';
 
 export {
@@ -78,6 +79,7 @@ function useAppForegroundReschedule(enabled: boolean) {
           usePlannedPaymentsStore.getState().plannedPayments,
           notificationLeadDays
         );
+        rescheduleDebtReminders(usePersonalDebtsStore.getState().personalDebts, notificationLeadDays);
       }
     });
 

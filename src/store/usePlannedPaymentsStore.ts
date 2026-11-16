@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { getSupabaseClient } from '../lib/supabase';
 import { reschedulePlannedPaymentReminders } from '../lib/notifications';
+import { addMonths, plannedRepeatInterval, toDateString } from '../lib/paymentSchedule';
 import { useSettingsStore } from './useSettingsStore';
 import type { NewPlannedPayment, PlannedPayment } from '../types/database';
 
@@ -13,22 +14,6 @@ interface PlannedPaymentsState {
   updatePlannedPayment: (id: string, payment: Partial<NewPlannedPayment>) => Promise<string | null>;
   deletePlannedPayment: (id: string) => Promise<string | null>;
   markAsPaid: (id: string) => Promise<string | null>;
-}
-
-function addOneMonth(dateString: string): string {
-  const date = new Date(dateString);
-  const day = date.getDate();
-  const target = new Date(date.getFullYear(), date.getMonth() + 1, 1);
-  const lastDay = new Date(target.getFullYear(), target.getMonth() + 1, 0).getDate();
-  target.setDate(Math.min(day, lastDay));
-  return toDateString(target);
-}
-
-function toDateString(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 async function reschedule(payments: PlannedPayment[]) {
@@ -94,7 +79,7 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>((set, get) =
   },
 
   // Ödendi işaretlemek hem gider hareketi oluşturur hem de tekrar eden ödemeyi
-  // bir sonraki aya taşır (tekrar etmiyorsa ödendi olarak kapatır).
+  // aralığı kadar (1/3/6/12 ay) ileri taşır; tekrar etmiyorsa ödendi olarak kapatır.
   markAsPaid: async (id) => {
     const supabase = getSupabaseClient();
     if (!supabase) return 'Supabase yapılandırılmamış.';
@@ -114,8 +99,9 @@ export const usePlannedPaymentsStore = create<PlannedPaymentsState>((set, get) =
     });
     if (transactionError) return transactionError.message;
 
-    const update = payment.repeat_monthly
-      ? { due_date: addOneMonth(payment.due_date) }
+    const interval = plannedRepeatInterval(payment);
+    const update = interval
+      ? { due_date: addMonths(payment.due_date, interval) }
       : { is_paid: true };
 
     const { error } = await supabase.from('planned_payments').update(update).eq('id', id);

@@ -74,14 +74,15 @@ export const useAccountsStore = create<AccountsState>((set, get) => ({
     return null;
   },
 
-  // Bir gelir hesaba aktarıldığında o hesabın bakiyesini artırır.
+  // Bir gelir hesaba aktarıldığında o hesabın bakiyesini artırır (negatif tutar geri alır).
   applyIncome: async (accountId, amount) => {
     const supabase = getSupabaseClient();
     if (!supabase) return;
     const account = get().accounts.find((a) => a.id === accountId);
     if (!account) return;
 
-    const nextBalance = Number(account.balance) + amount;
+    // Silinen/düzenlenen gelir geri alınırken bakiye eksiye düşmesin.
+    const nextBalance = Math.max(0, Math.round((Number(account.balance) + amount) * 100) / 100);
     await supabase.from('accounts').update({ balance: nextBalance }).eq('id', accountId);
 
     await get().fetchAccounts();

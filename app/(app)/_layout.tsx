@@ -24,6 +24,7 @@ export default function AppLayout() {
       <Stack.Screen name="account/new" options={{ presentation: 'modal', title: 'Hesap Ekle' }} />
       <Stack.Screen name="account/[id]/edit" options={{ presentation: 'modal', title: 'Hesabı Düzenle' }} />
       <Stack.Screen name="debt/new" options={{ presentation: 'modal', title: 'Borç Ekle' }} />
+      <Stack.Screen name="debt/[id]/index" options={{ title: 'Borç Detayı' }} />
       <Stack.Screen name="debt/[id]/edit" options={{ presentation: 'modal', title: 'Borcu Düzenle' }} />
       <Stack.Screen name="planned/index" options={{ title: 'Planlanan Ödemelerim' }} />
       <Stack.Screen

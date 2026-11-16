@@ -6,11 +6,38 @@ import { useFocusEffect, useRouter } from 'expo-router';
 import { clampDayToMonth } from '@/src/lib/cardDates';
 import { formatCurrency } from '@/src/lib/format';
 import { getSupabaseClient } from '@/src/lib/supabase';
+import { addMonths, hasPaymentPlan, nextInstallmentAmount, parseDateString } from '@/src/lib/paymentSchedule';
 import { useCardsStore } from '@/src/store/useCardsStore';
+import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
 import { colors, radius, spacing } from '@/src/theme';
-import type { Card, Transaction } from '@/src/types/database';
+import type { Card, PersonalDebt, Transaction } from '@/src/types/database';
 
 type CalendarEvent = { card: Card; date: Date; type: 'statement' | 'due' };
+type InstallmentEvent = { debt: PersonalDebt; date: Date; amount: number; number: number };
+
+const INSTALLMENT_COLOR = '#0369a1';
+const INSTALLMENT_BG = '#e0f2fe';
+
+// Sonraki ödeme tarihinden başlayıp plan aralığıyla ileri giderek, görünen aya
+// düşen taksitleri bulur. Toplam taksit sayısı biliniyorsa onu aşmaz.
+function installmentsInMonth(debt: PersonalDebt, year: number, month: number): InstallmentEvent[] {
+  if (debt.is_paid || !hasPaymentPlan(debt)) return [];
+  const monthEnd = new Date(year, month + 1, 0);
+  const events: InstallmentEvent[] = [];
+  let dateString = debt.next_payment_date;
+  let number = debt.paid_installments + 1;
+  for (let guard = 0; guard < 600; guard += 1) {
+    if (debt.installment_count != null && number > debt.installment_count) break;
+    const date = parseDateString(dateString);
+    if (date > monthEnd) break;
+    if (date.getFullYear() === year && date.getMonth() === month) {
+      events.push({ debt, date, amount: nextInstallmentAmount(debt), number });
+    }
+    dateString = addMonths(dateString, debt.payment_interval_months);
+    number += 1;
+  }
+  return events;
+}
 
 const weekdays = ['Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt', 'Paz'];
 const monthFormatter = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' });
@@ -28,12 +55,14 @@ export default function CalendarScreen() {
   const router = useRouter();
   const cards = useCardsStore((state) => state.cards);
   const fetchCards = useCardsStore((state) => state.fetchCards);
+  const personalDebts = usePersonalDebtsStore((state) => state.personalDebts);
+  const fetchPersonalDebts = usePersonalDebtsStore((state) => state.fetchPersonalDebts);
   const today = useMemo(() => new Date(), []);
   const [visibleMonth, setVisibleMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selectedDate, setSelectedDate] = useState(today);
   const [payments, setPayments] = useState<Transaction[]>([]);
 
-  useFocusEffect(useCallback(() => { void fetchCards(); }, [fetchCards]));
+  useFocusEffect(useCallback(() => { void fetchCards(); void fetchPersonalDebts(); }, [fetchCards, fetchPersonalDebts]));
 
   useEffect(() => {
     const supabase = getSupabaseClient();
@@ -58,6 +87,11 @@ export default function CalendarScreen() {
     ]);
   }, [cards, visibleMonth]);
 
+  const installmentEvents = useMemo(
+    () => personalDebts.flatMap((debt) => installmentsInMonth(debt, visibleMonth.getFullYear(), visibleMonth.getMonth())),
+    [personalDebts, visibleMonth]
+  );
+
   const monthCells = useMemo(() => {
     const year = visibleMonth.getFullYear();
     const month = visibleMonth.getMonth();
@@ -69,6 +103,7 @@ export default function CalendarScreen() {
   }, [visibleMonth]);
 
   const selectedEvents = events.filter((event) => isSameDate(event.date, selectedDate));
+  const selectedInstallments = installmentEvents.filter((event) => isSameDate(event.date, selectedDate));
 
   function changeMonth(offset: number) {
     const next = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + offset, 1);
@@ -88,7 +123,7 @@ export default function CalendarScreen() {
         <View style={styles.introIcon}><Ionicons name="calendar-outline" size={24} color={colors.primary} /></View>
         <View style={styles.introCopy}>
           <Text style={styles.introTitle}>Kart takvimi</Text>
-          <Text style={styles.introText}>Hesap kesim ve son ödeme günlerini tek yerde takip et.</Text>
+          <Text style={styles.introText}>Hesap kesim, son ödeme ve taksit günlerini tek yerde takip et.</Text>
         </View>
       </View>
 
@@ -108,14 +143,21 @@ export default function CalendarScreen() {
         <View style={styles.daysGrid}>
           {monthCells.map((date, index) => {
             if (!date) return <View key={`empty-${index}`} style={styles.dayCell} />;
-            const dayEvents = events.filter((event) => isSameDate(event.date, date));
+            const dayDots = [
+              ...events
+                .filter((event) => isSameDate(event.date, date))
+                .map((event) => ({ key: `${event.card.id}-${event.type}`, color: event.type === 'due' ? colors.overdue : colors.primary })),
+              ...installmentEvents
+                .filter((event) => isSameDate(event.date, date))
+                .map((event) => ({ key: `debt-${event.debt.id}`, color: INSTALLMENT_COLOR })),
+            ];
             const selected = isSameDate(date, selectedDate);
             const isToday = isSameDate(date, today);
             return (
               <Pressable key={toDateString(date)} style={({ pressed }) => [styles.dayCell, selected && styles.daySelected, pressed && styles.pressed]} onPress={() => setSelectedDate(date)}>
                 <Text style={[styles.dayNumber, selected && styles.dayNumberSelected, isToday && !selected && styles.dayNumberToday]}>{date.getDate()}</Text>
                 <View style={styles.eventDots}>
-                  {dayEvents.slice(0, 3).map((event, eventIndex) => <View key={`${event.card.id}-${event.type}`} style={[styles.dot, { backgroundColor: event.type === 'due' ? colors.overdue : colors.primary }, eventIndex > 0 && styles.dotGap]} />)}
+                  {dayDots.slice(0, 3).map((dot, dotIndex) => <View key={dot.key} style={[styles.dot, { backgroundColor: dot.color }, dotIndex > 0 && styles.dotGap]} />)}
                 </View>
               </Pressable>
             );
@@ -124,10 +166,25 @@ export default function CalendarScreen() {
         <View style={styles.legend}>
           <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: colors.primary }]} /><Text style={styles.legendText}>Hesap kesim</Text></View>
           <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: colors.overdue }]} /><Text style={styles.legendText}>Son ödeme</Text></View>
+          <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: INSTALLMENT_COLOR }]} /><Text style={styles.legendText}>Taksit</Text></View>
         </View>
       </View>
 
       <Text style={styles.selectedHeading}>{dayFormatter.format(selectedDate)}</Text>
+      {selectedInstallments.map((event) => (
+        <Pressable key={`debt-${event.debt.id}`} style={({ pressed }) => [styles.eventCard, pressed && styles.pressed]} onPress={() => router.push(`/debt/${event.debt.id}` as never)}>
+          <View style={[styles.eventTypeIcon, { backgroundColor: INSTALLMENT_BG }]}>
+            <Ionicons name="repeat-outline" size={22} color={INSTALLMENT_COLOR} />
+          </View>
+          <View style={styles.eventCopy}>
+            <Text style={styles.eventTitle} numberOfLines={1}>{event.debt.person_name}</Text>
+            <Text style={styles.eventType}>
+              Taksit ödemesi{event.debt.installment_count ? ` · ${event.number}/${event.debt.installment_count}` : ''}
+            </Text>
+          </View>
+          <Text style={styles.installmentAmount}>{formatCurrency(event.amount)}</Text>
+        </Pressable>
+      ))}
       {selectedEvents.length ? selectedEvents.map((event) => {
         const paid = paymentTotal(event.card.id);
         // Kart ödemesi kaydedildiğinde mevcut ekstre borcu azaltılıyor. Bu nedenle
@@ -140,7 +197,7 @@ export default function CalendarScreen() {
               <Ionicons name={event.type === 'due' ? 'card-outline' : 'document-text-outline'} size={22} color={event.type === 'due' ? colors.overdue : colors.primary} />
             </View>
             <View style={styles.eventCopy}>
-              <Text style={styles.eventTitle}>{event.card.nickname || event.card.bank_name}</Text>
+              <Text style={styles.eventTitle} numberOfLines={1}>{event.card.nickname || event.card.bank_name}</Text>
               <Text style={styles.eventType}>{event.type === 'due' ? 'Son ödeme günü' : 'Hesap kesim günü'}</Text>
             </View>
             <Ionicons name="chevron-forward" size={20} color={colors.slate400} />
@@ -151,7 +208,7 @@ export default function CalendarScreen() {
             </View>
           </Pressable>
         );
-      }) : <View style={styles.noEvents}><Ionicons name="calendar-clear-outline" size={28} color={colors.slate400} /><Text style={styles.noEventsText}>Bu tarihte kart etkinliği yok.</Text></View>}
+      }) : selectedInstallments.length ? null : <View style={styles.noEvents}><Ionicons name="calendar-clear-outline" size={28} color={colors.slate400} /><Text style={styles.noEventsText}>Bu tarihte ödeme yok.</Text></View>}
     </ScrollView>
   );
 }
@@ -193,6 +250,7 @@ const styles = StyleSheet.create({
   eventCopy: { flex: 1 },
   eventTitle: { color: colors.slate800, fontSize: 16, fontWeight: '800' },
   eventType: { color: colors.slate500, fontSize: 13, marginTop: 2 },
+  installmentAmount: { color: colors.slate800, fontSize: 16, fontWeight: '800' },
   amountGrid: { flexBasis: '100%', flexDirection: 'row', borderTopWidth: 1, borderTopColor: colors.slate100, paddingTop: spacing.md },
   amountCell: { flex: 1 },
   amountLabel: { color: colors.slate500, fontSize: 11 },

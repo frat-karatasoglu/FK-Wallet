@@ -5,6 +5,8 @@ import { useFocusEffect, useRouter } from 'expo-router';
 
 import { useCardsStore } from '@/src/store/useCardsStore';
 import { usePlannedPaymentsStore } from '@/src/store/usePlannedPaymentsStore';
+import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
+import { hasPaymentPlan, nextInstallmentAmount, parseDateString } from '@/src/lib/paymentSchedule';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { computeCardDates } from '@/src/lib/cardDates';
 import { formatCurrency, formatDate } from '@/src/lib/format';
@@ -28,13 +30,16 @@ export default function NotificationsScreen() {
   const fetchCards = useCardsStore((s) => s.fetchCards);
   const plannedPayments = usePlannedPaymentsStore((s) => s.plannedPayments);
   const fetchPlannedPayments = usePlannedPaymentsStore((s) => s.fetchPlannedPayments);
+  const personalDebts = usePersonalDebtsStore((s) => s.personalDebts);
+  const fetchPersonalDebts = usePersonalDebtsStore((s) => s.fetchPersonalDebts);
   const notificationLeadDays = useSettingsStore((s) => s.notificationLeadDays);
 
   useFocusEffect(
     useCallback(() => {
       fetchCards();
       fetchPlannedPayments();
-    }, [fetchCards, fetchPlannedPayments])
+      fetchPersonalDebts();
+    }, [fetchCards, fetchPlannedPayments, fetchPersonalDebts])
   );
 
   const reminders = useMemo<ReminderRow[]>(() => {
@@ -59,13 +64,27 @@ export default function NotificationsScreen() {
         icon: 'calendar',
         title: payment.title,
         subtitle: 'Planlanan ödeme',
-        date: new Date(payment.due_date),
+        date: parseDateString(payment.due_date),
         amount: payment.amount,
         onPress: () => router.push(`/planned/${payment.id}/edit`),
       }));
 
-    return [...cardRows, ...plannedRows].sort((a, b) => a.date.getTime() - b.date.getTime());
-  }, [cards, plannedPayments, router]);
+    const debtRows: ReminderRow[] = personalDebts.flatMap((debt) =>
+      !debt.is_paid && hasPaymentPlan(debt)
+        ? [{
+            id: `debt-${debt.id}`,
+            icon: 'repeat' as const,
+            title: debt.person_name,
+            subtitle: 'Taksit ödemesi',
+            date: parseDateString(debt.next_payment_date),
+            amount: nextInstallmentAmount(debt),
+            onPress: () => router.push(`/debt/${debt.id}` as never),
+          }]
+        : []
+    );
+
+    return [...cardRows, ...plannedRows, ...debtRows].sort((a, b) => a.date.getTime() - b.date.getTime());
+  }, [cards, plannedPayments, personalDebts, router]);
 
   return (
     <FlatList
@@ -105,7 +124,7 @@ export default function NotificationsScreen() {
         <EmptyState
           icon="notifications-outline"
           title="Bekleyen hatırlatma yok"
-          message="Kart veya planlanan ödeme ekledikçe burada görünecek."
+          message="Kart, planlanan ödeme veya taksitli borç ekledikçe burada görünecek."
         />
       }
     />

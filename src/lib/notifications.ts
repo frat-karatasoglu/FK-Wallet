@@ -2,13 +2,16 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 import { computeCardDates } from './cardDates';
 import { formatCurrency } from './format';
+import { hasPaymentPlan, nextInstallmentAmount, parseDateString } from './paymentSchedule';
 import { useSettingsStore } from '../store/useSettingsStore';
-import type { Card, PlannedPayment } from '../types/database';
+import type { Card, PersonalDebt, PlannedPayment } from '../types/database';
 
 const CARD_LEAD_PREFIX = 'card-due-';
 const CARD_DAY_PREFIX = 'card-dueday-';
 const PLANNED_LEAD_PREFIX = 'planned-due-';
 const PLANNED_DAY_PREFIX = 'planned-dueday-';
+const DEBT_LEAD_PREFIX = 'debt-due-';
+const DEBT_DAY_PREFIX = 'debt-dueday-';
 
 const REMINDER_HOUR = 9;
 
@@ -114,7 +117,7 @@ export async function reschedulePlannedPaymentReminders(
   await cancelStaleByPrefix(PLANNED_DAY_PREFIX, ids);
 
   for (const payment of open) {
-    const dueDate = new Date(payment.due_date);
+    const dueDate = parseDateString(payment.due_date);
     const amountText = ` (${formatCurrency(payment.amount)})`;
 
     await schedule(
@@ -128,6 +131,36 @@ export async function reschedulePlannedPaymentReminders(
       `${PLANNED_DAY_PREFIX}${payment.id}`,
       'Planlanan ödeme bugün',
       `${payment.title}${amountText} ödemesinin günü bugün.`,
+      atReminderHour(dueDate, 0)
+    );
+  }
+}
+
+export async function rescheduleDebtReminders(debts: PersonalDebt[], leadDays: number): Promise<void> {
+  if (!useSettingsStore.getState().notificationsEnabled) return;
+  if (!(await ensureNotificationPermission())) return;
+
+  const planned = debts.filter((debt) => !debt.is_paid && hasPaymentPlan(debt));
+  const ids = new Set(planned.map((debt) => debt.id));
+  await cancelStaleByPrefix(DEBT_LEAD_PREFIX, ids);
+  await cancelStaleByPrefix(DEBT_DAY_PREFIX, ids);
+
+  for (const debt of planned) {
+    if (!hasPaymentPlan(debt)) continue;
+    const dueDate = parseDateString(debt.next_payment_date);
+    const amountText = ` (${formatCurrency(nextInstallmentAmount(debt))})`;
+
+    await schedule(
+      `${DEBT_LEAD_PREFIX}${debt.id}`,
+      'Taksit ödemesi yaklaşıyor',
+      `${debt.person_name}${amountText} taksitine ${leadDays} gün kaldı.`,
+      atReminderHour(dueDate, leadDays)
+    );
+
+    await schedule(
+      `${DEBT_DAY_PREFIX}${debt.id}`,
+      'Taksit ödemesi bugün',
+      `${debt.person_name}${amountText} taksitinin ödeme günü bugün.`,
       atReminderHour(dueDate, 0)
     );
   }

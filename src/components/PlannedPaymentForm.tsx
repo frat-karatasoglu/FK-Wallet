@@ -14,21 +14,15 @@ import { FormField } from './FormField';
 import { PrimaryButton } from './PrimaryButton';
 import { DateField } from './DateField';
 import { formatMoneyInput, moneyValueToInput, parseMoneyInput } from '../lib/moneyInput';
+import { PAYMENT_INTERVALS, intervalLabel, parseDateString, plannedRepeatInterval, toDateString } from '../lib/paymentSchedule';
 import { colors, radius, spacing, typography } from '../theme';
-import type { NewPlannedPayment } from '../types/database';
+import type { NewPlannedPayment, RepeatInterval } from '../types/database';
 
 interface PlannedPaymentFormProps {
   initialValues?: Partial<NewPlannedPayment>;
   submitLabel: string;
   onSubmit: (values: NewPlannedPayment) => Promise<string | null>;
   onDelete?: () => Promise<void>;
-}
-
-function toDateString(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
 }
 
 export function PlannedPaymentForm({
@@ -42,9 +36,14 @@ export function PlannedPaymentForm({
     moneyValueToInput(initialValues?.amount)
   );
   const [dueDate, setDueDate] = useState(
-    initialValues?.due_date ? new Date(initialValues.due_date) : new Date()
+    initialValues?.due_date ? parseDateString(initialValues.due_date) : new Date()
   );
-  const [repeatMonthly, setRepeatMonthly] = useState(initialValues?.repeat_monthly ?? false);
+  const [repeatInterval, setRepeatInterval] = useState<RepeatInterval>(
+    plannedRepeatInterval({
+      repeat_interval_months: initialValues?.repeat_interval_months ?? 0,
+      repeat_monthly: initialValues?.repeat_monthly ?? false,
+    })
+  );
   const [note, setNote] = useState(initialValues?.note ?? '');
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +66,9 @@ export function PlannedPaymentForm({
       title: title.trim(),
       amount: parsedAmount,
       due_date: toDateString(dueDate),
-      repeat_monthly: repeatMonthly,
+      // Eski uygulama sürümleri sadece repeat_monthly'yi okuyor.
+      repeat_monthly: repeatInterval > 0,
+      repeat_interval_months: repeatInterval,
       note: note.trim() || null,
     });
     setIsSubmitting(false);
@@ -103,17 +104,29 @@ export function PlannedPaymentForm({
 
         <DateField label="Ödeme tarihi" value={dueDate} onChange={setDueDate} allowFuture />
 
-        <Pressable style={styles.toggleRow} onPress={() => setRepeatMonthly((v) => !v)}>
-          <View style={[styles.checkbox, repeatMonthly && styles.checkboxChecked]}>
-            {repeatMonthly ? <Ionicons name="checkmark" size={16} color={colors.white} /> : null}
-          </View>
-          <View style={styles.toggleTextWrap}>
-            <Text style={styles.toggleTitle}>Her ay tekrar et</Text>
-            <Text style={styles.toggleSub}>
-              Ödendi işaretlediğinde otomatik olarak bir sonraki aya taşınır.
-            </Text>
-          </View>
-        </Pressable>
+        <Text style={[typography.caption, styles.repeatLabel]}>Tekrar</Text>
+        <View style={styles.chipRow}>
+          {([0, ...PAYMENT_INTERVALS] as RepeatInterval[]).map((value) => {
+            const selected = value === repeatInterval;
+            return (
+              <Pressable
+                key={value}
+                onPress={() => setRepeatInterval(value)}
+                style={[styles.chip, selected && styles.chipSelected]}
+              >
+                {selected ? <Ionicons name="checkmark" size={14} color={colors.white} /> : null}
+                <Text style={[styles.chipText, selected && styles.chipTextSelected]}>
+                  {value === 0 ? 'Tek sefer' : intervalLabel(value)}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+        <Text style={styles.toggleSub}>
+          {repeatInterval
+            ? 'Ödendi işaretlediğinde otomatik olarak bir sonraki döneme taşınır.'
+            : 'Ödendi işaretlediğinde tamamlananlara geçer.'}
+        </Text>
 
         <FormField
           label="Not (opsiyonel)"
@@ -150,33 +163,23 @@ export function PlannedPaymentForm({
 const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.white },
   container: { padding: spacing.xl },
-  toggleRow: {
+  repeatLabel: { marginTop: spacing.lg, marginBottom: spacing.sm },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
+  chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.md,
-    marginTop: spacing.lg,
+    gap: 4,
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.sm,
+    borderRadius: radius.full,
+    backgroundColor: colors.slate100,
   },
-  checkbox: {
-    width: 24,
-    height: 24,
-    borderRadius: radius.sm,
-    borderWidth: 1.5,
-    borderColor: colors.slate300,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  checkboxChecked: {
-    backgroundColor: colors.navy,
-    borderColor: colors.navy,
-  },
-  toggleTextWrap: { flex: 1 },
-  toggleTitle: {
-    ...typography.body,
-    fontWeight: '600',
-  },
+  chipSelected: { backgroundColor: colors.navy },
+  chipText: { fontSize: 13, fontWeight: '600', color: colors.slate700 },
+  chipTextSelected: { color: colors.white },
   toggleSub: {
     ...typography.caption,
-    marginTop: 2,
+    marginTop: spacing.sm,
   },
   error: {
     color: colors.overdue,

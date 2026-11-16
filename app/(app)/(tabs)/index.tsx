@@ -14,6 +14,7 @@ import { useAccountsStore } from '@/src/store/useAccountsStore';
 import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
 import { usePlannedPaymentsStore } from '@/src/store/usePlannedPaymentsStore';
 import { useTransactionsStore } from '@/src/store/useTransactionsStore';
+import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { cardPalette, colors, radius, spacing } from '@/src/theme';
 import type { Card, Transaction } from '@/src/types/database';
 
@@ -57,8 +58,10 @@ export default function DashboardScreen() {
   const fetchTransactionsDateRange = useTransactionsStore((state) => state.fetchDateRange);
   const plannedPayments = usePlannedPaymentsStore((state) => state.plannedPayments);
   const fetchPlannedPayments = usePlannedPaymentsStore((state) => state.fetchPlannedPayments);
+  const cashBalance = useSettingsStore((state) => state.cashBalance);
 
   const refresh = useCallback(() => {
+    void useSettingsStore.getState().fetchSettings();
     void fetchCards();
     void fetchAccounts();
     void fetchPersonalDebts();
@@ -99,7 +102,8 @@ export default function DashboardScreen() {
     const personalDebt = personalDebts
       .filter((debt) => !debt.is_paid)
       .reduce((sum, debt) => sum + Number(debt.amount), 0);
-    const accountBalance = accounts.reduce((sum, account) => sum + Number(account.balance), 0);
+    // Nakit olarak tutulan gelirler de varlık: hesap bakiyelerine eklenir.
+    const accountBalance = accounts.reduce((sum, account) => sum + Number(account.balance), 0) + cashBalance;
 
     return {
       totals: {
@@ -115,7 +119,7 @@ export default function DashboardScreen() {
       upcomingCard: nextCards[0]?.card,
       upcomingDate: nextCards[0]?.date,
     };
-  }, [accounts, cards, personalDebts, plannedPayments, transactions]);
+  }, [accounts, cards, cashBalance, personalDebts, plannedPayments, transactions]);
 
   function goToCard(card: Card) {
     router.push(`/card/${card.id}`);
@@ -210,7 +214,7 @@ export default function DashboardScreen() {
           >
             {formatSignedCurrency(totals.netWorth)}
           </Text>
-          <Text style={styles.netWorthCaption}>Hesaplar − tüm borçlar</Text>
+          <Text style={styles.netWorthCaption}>Hesaplar + nakit − tüm borçlar</Text>
         </View>
 
         <SectionHeader title="Kartlarım" count={cards.length} action="Tümü" onPress={() => router.push('/cards')} />
@@ -247,7 +251,11 @@ export default function DashboardScreen() {
             iconBackground="#e3e8ff"
             iconColor={colors.navy}
             value={formatCurrency(totals.accountBalance)}
-            caption={accounts.length ? `${accounts.length} hesap` : 'Hesap ekle'}
+            caption={
+              cashBalance > 0
+                ? `${accounts.length ? `${accounts.length} hesap + ` : ''}nakit ${formatCurrency(cashBalance)}`
+                : accounts.length ? `${accounts.length} hesap` : 'Hesap ekle'
+            }
             onPress={() => router.push('/accounts')}
           />
           <SummaryCard
