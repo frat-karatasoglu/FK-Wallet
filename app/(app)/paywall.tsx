@@ -101,7 +101,7 @@ export default function PaywallScreen() {
     <ScrollView style={styles.flex} contentContainerStyle={styles.container}>
       <View style={styles.hero}>
         <View style={styles.heroIcon}><Ionicons name="diamond-outline" size={30} color={colors.white} /></View>
-        <Text style={styles.heroTitle}>FK Wallet Premium</Text>
+        <Text style={styles.heroTitle}>FK Cüzdan Premium</Text>
         <Text style={styles.heroText}>
           {access.status === 'expired'
             ? `${TRIAL_DAYS} günlük ücretsiz deneme süren doldu. Verilerin güvende; görüntülemeye devam edebilirsin. Yeni kayıt eklemek ve düzenlemek için Premium’a geç.`

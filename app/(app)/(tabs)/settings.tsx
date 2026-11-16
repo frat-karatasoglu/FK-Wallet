@@ -13,7 +13,7 @@ import { colors, spacing } from '@/src/theme';
 const LEAD_DAY_OPTIONS = [1, 2, 3, 5, 7];
 
 function getDisplayName(value: unknown) {
-  return typeof value === 'string' && value.trim() ? value.trim() : 'FK Wallet Kullanıcısı';
+  return typeof value === 'string' && value.trim() ? value.trim() : 'FK Cüzdan Kullanıcısı';
 }
 
 export default function SettingsScreen() {

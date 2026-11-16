@@ -1,8 +1,8 @@
-# FK Wallet Gizlilik Politikası
+# FK Cüzdan Gizlilik Politikası
 
 Son güncelleme: 18 Kasım 2026
 
-FK Wallet ("uygulama"), kullanıcıların kredi kartı, banka hesabı, kişisel borç, gelir/gider ve planlanan ödemelerini kişisel olarak takip etmesi için tasarlanmış bir mobil uygulamadır.
+FK Cüzdan (İngilizce adıyla FK Wallet; "uygulama"), kullanıcıların kredi kartı, banka hesabı, kişisel borç, gelir/gider ve planlanan ödemelerini kişisel olarak takip etmesi için tasarlanmış bir mobil uygulamadır.
 
 ## Topladığımız Veriler
 

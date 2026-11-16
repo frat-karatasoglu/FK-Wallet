@@ -42,3 +42,6 @@ yarn-error.*
 
 # demo credentials
 store-assets/DEMO_HESABI.md
+
+# Tanıtım videosu YouTube’a yüklenir, repoda tutulmaz
+store-assets/*.mp4

@@ -1,8 +1,9 @@
 import { Stack } from 'expo-router';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { AnimatedSplash } from '@/src/components/AnimatedSplash';
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { useCardsStore } from '@/src/store/useCardsStore';
 import { useAccountsStore } from '@/src/store/useAccountsStore';
@@ -34,11 +35,8 @@ export default function RootLayout() {
     init();
   }, [init]);
 
-  useEffect(() => {
-    if (!isInitializing) {
-      SplashScreen.hideAsync().catch(() => {});
-    }
-  }, [isInitializing]);
+  // Yerel açılış ekranını AnimatedSplash, kendi logosu çizildiği anda kapatır.
+  const [splashDone, setSplashDone] = useState(false);
 
   useAppForegroundReschedule(session != null);
 
@@ -54,14 +52,17 @@ export default function RootLayout() {
   }
 
   return (
-    <Stack>
-      <Stack.Protected guard={session != null}>
-        <Stack.Screen name="(app)" options={{ headerShown: false }} />
-      </Stack.Protected>
-      <Stack.Protected guard={session == null}>
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      </Stack.Protected>
-    </Stack>
+    <>
+      <Stack>
+        <Stack.Protected guard={session != null}>
+          <Stack.Screen name="(app)" options={{ headerShown: false }} />
+        </Stack.Protected>
+        <Stack.Protected guard={session == null}>
+          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        </Stack.Protected>
+      </Stack>
+      {!splashDone ? <AnimatedSplash onFinish={() => setSplashDone(true)} /> : null}
+    </>
   );
 }
 

@@ -1,8 +1,8 @@
-# FK Wallet – Google Play mağaza metinleri
+# FK Cüzdan – Google Play mağaza metinleri
 
 ## Uygulama adı (en fazla 30 karakter)
 
-FK Wallet: Kart ve Borç Takibi
+FK Cüzdan: Kart ve Borç Takibi
 
 ## Kısa açıklama (en fazla 80 karakter)
 
@@ -10,7 +10,7 @@ Kart borçlarını, son ödeme günlerini ve bütçeni tek yerden takip et.
 
 ## Tam açıklama (en fazla 4000 karakter)
 
-FK Wallet, kredi kartlarını, banka hesaplarını, borçlarını ve aylık bütçeni tek bir uygulamada toplayan sade bir kişisel finans takip uygulamasıdır. Hangi kartın ne zaman kesildiğini, son ödeme gününün ne zaman geldiğini ve bu ay ne kadar harcadığını bir bakışta gör.
+FK Cüzdan, kredi kartlarını, banka hesaplarını, borçlarını ve aylık bütçeni tek bir uygulamada toplayan sade bir kişisel finans takip uygulamasıdır. Hangi kartın ne zaman kesildiğini, son ödeme gününün ne zaman geldiğini ve bu ay ne kadar harcadığını bir bakışta gör.
 
 KREDİ KARTLARIN TEK EKRANDA
 • Birden fazla kredi kartını ekle; her kart için hesap kesim ve son ödeme gününü belirle
@@ -44,10 +44,11 @@ SADE VE ANLAŞILIR
 • Hızlı ekleme butonuyla saniyeler içinde kayıt gir
 
 GİZLİLİK VE GÜVENLİK
-• FK Wallet hiçbir bankaya bağlanmaz; tüm bilgiler senin girdiğin kadardır
-• Gerçek kart numarası veya CVV istenmez, saklanmaz; kartı yalnızca son 4 hanesiyle ayırt edersin• Verilerin hesabına özel olarak saklanır ve yalnızca sen erişebilirsin
+• FK Cüzdan hiçbir bankaya bağlanmaz; tüm bilgiler senin girdiğin kadardır
+• Gerçek kart numarası veya CVV istenmez, saklanmaz; kartı yalnızca son 4 hanesiyle ayırt edersin
+• Verilerin hesabına özel olarak saklanır ve yalnızca sen erişebilirsin
 • Verilerin reklam amacıyla kullanılmaz, üçüncü taraflarla paylaşılmaz
 
-FK Wallet bir bankacılık uygulaması değildir; ödeme yapmaz, para transferi yapmaz. Bütçeni ve ödeme takvimini düzenli tutman için tasarlanmış bir takip aracıdır.
+FK Cüzdan bir bankacılık uygulaması değildir; ödeme yapmaz, para transferi yapmaz. Bütçeni ve ödeme takvimini düzenli tutman için tasarlanmış bir takip aracıdır.
 
 Görüş ve önerilerin için: karatasoglufirat@gmail.com
