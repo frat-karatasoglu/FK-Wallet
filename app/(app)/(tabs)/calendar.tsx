@@ -9,7 +9,8 @@ import { getSupabaseClient } from '@/src/lib/supabase';
 import { addMonths, hasPaymentPlan, nextInstallmentAmount, parseDateString } from '@/src/lib/paymentSchedule';
 import { useCardsStore } from '@/src/store/useCardsStore';
 import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
-import { colors, radius, spacing } from '@/src/theme';
+import { colors, radius, spacing, iconTile, surface } from '@/src/theme';
+import { Enter, PressableScale, useFocusEntrance } from '@/src/components/motion';
 import type { Card, PersonalDebt, Transaction } from '@/src/types/database';
 
 type CalendarEvent = { card: Card; date: Date; type: 'statement' | 'due' };
@@ -117,17 +118,20 @@ export default function CalendarScreen() {
       .reduce((sum, payment) => sum + Number(payment.amount), 0);
   }
 
+  const entrance = useFocusEntrance();
+  const dayEntrance = useFocusEntrance(selectedDate.getTime());
+
   return (
     <ScrollView style={styles.flex} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-      <View style={styles.intro}>
+      <Enter time={entrance} index={0} style={styles.intro}>
         <View style={styles.introIcon}><Ionicons name="calendar-outline" size={24} color={colors.primary} /></View>
         <View style={styles.introCopy}>
           <Text style={styles.introTitle}>Kart takvimi</Text>
           <Text style={styles.introText}>Hesap kesim, son ödeme ve taksit günlerini tek yerde takip et.</Text>
         </View>
-      </View>
+      </Enter>
 
-      <View style={styles.calendarCard}>
+      <Enter time={entrance} index={1} style={styles.calendarCard}>
         <View style={styles.monthHeader}>
           <Pressable style={styles.monthButton} onPress={() => changeMonth(-1)} hitSlop={8}>
             <Ionicons name="chevron-back" size={22} color={colors.navy} />
@@ -168,11 +172,12 @@ export default function CalendarScreen() {
           <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: colors.overdue }]} /><Text style={styles.legendText}>Son ödeme</Text></View>
           <View style={styles.legendItem}><View style={[styles.dot, { backgroundColor: INSTALLMENT_COLOR }]} /><Text style={styles.legendText}>Taksit</Text></View>
         </View>
-      </View>
+      </Enter>
 
-      <Text style={styles.selectedHeading}>{dayFormatter.format(selectedDate)}</Text>
-      {selectedInstallments.map((event) => (
-        <Pressable key={`debt-${event.debt.id}`} style={({ pressed }) => [styles.eventCard, pressed && styles.pressed]} onPress={() => router.push(`/debt/${event.debt.id}` as never)}>
+      <Enter time={dayEntrance} index={0}><Text style={styles.selectedHeading}>{dayFormatter.format(selectedDate)}</Text></Enter>
+      {selectedInstallments.map((event, i) => (
+        <Enter key={`debt-${event.debt.id}`} time={dayEntrance} index={1 + i}>
+        <PressableScale innerStyle={styles.eventCard} onPress={() => router.push(`/debt/${event.debt.id}` as never)}>
           <View style={[styles.eventTypeIcon, { backgroundColor: INSTALLMENT_BG }]}>
             <Ionicons name="repeat-outline" size={22} color={INSTALLMENT_COLOR} />
           </View>
@@ -183,16 +188,18 @@ export default function CalendarScreen() {
             </Text>
           </View>
           <Text style={styles.installmentAmount}>{formatCurrency(event.amount)}</Text>
-        </Pressable>
+        </PressableScale>
+        </Enter>
       ))}
-      {selectedEvents.length ? selectedEvents.map((event) => {
+      {selectedEvents.length ? selectedEvents.map((event, i) => {
         const paid = paymentTotal(event.card.id);
         // Kart ödemesi kaydedildiğinde mevcut ekstre borcu azaltılıyor. Bu nedenle
         // başlangıçtaki ödenecek tutarı, kalan ekstre + o ay kaydedilen ödemelerden kuruyoruz.
         const remaining = Number(event.card.statement_amount ?? event.card.current_balance);
         const dueAmount = remaining + paid;
         return (
-          <Pressable key={`${event.card.id}-${event.type}`} style={({ pressed }) => [styles.eventCard, pressed && styles.pressed]} onPress={() => router.push(`/card/${event.card.id}`)}>
+          <Enter key={`${event.card.id}-${event.type}`} time={dayEntrance} index={1 + selectedInstallments.length + i}>
+          <PressableScale innerStyle={styles.eventCard} onPress={() => router.push(`/card/${event.card.id}`)}>
             <View style={[styles.eventTypeIcon, { backgroundColor: event.type === 'due' ? colors.overdueBg : colors.primaryLight }]}>
               <Ionicons name={event.type === 'due' ? 'card-outline' : 'document-text-outline'} size={22} color={event.type === 'due' ? colors.overdue : colors.primary} />
             </View>
@@ -206,9 +213,10 @@ export default function CalendarScreen() {
               <CalendarAmount label="Ödendi" value={paid} tone={colors.income} />
               <CalendarAmount label="Kalan" value={remaining} tone={remaining > 0 ? colors.overdue : colors.income} />
             </View>
-          </Pressable>
+          </PressableScale>
+          </Enter>
         );
-      }) : selectedInstallments.length ? null : <View style={styles.noEvents}><Ionicons name="calendar-clear-outline" size={28} color={colors.slate400} /><Text style={styles.noEventsText}>Bu tarihte ödeme yok.</Text></View>}
+      }) : selectedInstallments.length ? null : <Enter time={dayEntrance} index={1} style={styles.noEvents}><Ionicons name="calendar-clear-outline" size={28} color={colors.slate400} /><Text style={styles.noEventsText}>Bu tarihte ödeme yok.</Text></Enter>}
     </ScrollView>
   );
 }
@@ -221,20 +229,20 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: colors.background },
   container: { padding: spacing.lg, paddingBottom: spacing.xxl },
   pressed: { opacity: 0.72 },
-  intro: { flexDirection: 'row', gap: spacing.md, alignItems: 'center', marginBottom: spacing.lg },
-  introIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryLight },
+  intro: { ...surface, flexDirection: 'row', gap: spacing.md, alignItems: 'center', padding: 14, marginBottom: spacing.lg },
+  introIcon: { ...iconTile, width: 44, height: 44, borderRadius: 13, backgroundColor: colors.primaryLight },
   introCopy: { flex: 1 },
   introTitle: { color: colors.slate800, fontSize: 20, fontWeight: '800' },
   introText: { color: colors.slate500, fontSize: 13, marginTop: 2 },
-  calendarCard: { backgroundColor: colors.white, borderRadius: radius.lg, padding: spacing.md, borderWidth: 1, borderColor: colors.slate100 },
+  calendarCard: { ...surface, borderRadius: 22, padding: spacing.md },
   monthHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.md },
-  monthButton: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.slate100 },
+  monthButton: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#eef2f9' },
   monthTitle: { color: colors.slate800, fontSize: 18, fontWeight: '800', textTransform: 'capitalize' },
   weekRow: { flexDirection: 'row', marginBottom: spacing.xs },
   weekday: { width: '14.2857%', textAlign: 'center', color: colors.slate400, fontSize: 11, fontWeight: '700' },
   daysGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-  dayCell: { width: '14.2857%', height: 53, alignItems: 'center', justifyContent: 'center', borderRadius: radius.sm },
-  daySelected: { backgroundColor: colors.primary },
+  dayCell: { width: '14.2857%', height: 53, alignItems: 'center', justifyContent: 'center', borderRadius: 14 },
+  daySelected: { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 8, elevation: 3 },
   dayNumber: { color: colors.slate700, fontSize: 14, fontWeight: '600' },
   dayNumberSelected: { color: colors.white },
   dayNumberToday: { color: colors.primary, fontWeight: '900' },
@@ -245,8 +253,8 @@ const styles = StyleSheet.create({
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
   legendText: { color: colors.slate500, fontSize: 11 },
   selectedHeading: { color: colors.slate800, fontSize: 22, fontWeight: '800', textTransform: 'capitalize', marginTop: spacing.xl, marginBottom: spacing.sm },
-  eventCard: { backgroundColor: colors.white, borderRadius: radius.lg, padding: spacing.md, marginBottom: spacing.md, borderWidth: 1, borderColor: colors.slate100, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.md },
-  eventTypeIcon: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  eventCard: { ...surface, padding: 14, marginBottom: 12, flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: spacing.md },
+  eventTypeIcon: { ...iconTile, width: 44, height: 44, borderRadius: 13 },
   eventCopy: { flex: 1 },
   eventTitle: { color: colors.slate800, fontSize: 16, fontWeight: '800' },
   eventType: { color: colors.slate500, fontSize: 13, marginTop: 2 },
@@ -255,6 +263,6 @@ const styles = StyleSheet.create({
   amountCell: { flex: 1 },
   amountLabel: { color: colors.slate500, fontSize: 11 },
   amountValue: { color: colors.slate800, fontSize: 15, fontWeight: '800', marginTop: 2 },
-  noEvents: { minHeight: 120, borderRadius: radius.lg, alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.white, borderWidth: 1, borderColor: colors.slate100 },
+  noEvents: { ...surface, minHeight: 120, alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   noEventsText: { color: colors.slate500, fontSize: 14 },
 });

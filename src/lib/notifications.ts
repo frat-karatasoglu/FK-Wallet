@@ -27,10 +27,11 @@ Notifications.setNotificationHandler({
 
 export async function ensureNotificationSetup(): Promise<void> {
   if (Platform.OS === 'android') {
+    // Expo Go'da bildirim kanalı oluşturulamıyor; hata uygulamayı durdurmasın.
     await Notifications.setNotificationChannelAsync('card-reminders', {
       name: 'Ödeme hatırlatmaları',
       importance: Notifications.AndroidImportance.HIGH,
-    });
+    }).catch((error) => console.warn('Bildirim kanalı oluşturulamadı:', error));
   }
 }
 

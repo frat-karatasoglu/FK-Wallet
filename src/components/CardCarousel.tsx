@@ -1,18 +1,9 @@
-import { useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  useWindowDimensions,
-  type NativeScrollEvent,
-  type NativeSyntheticEvent,
-} from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { CardPreview, CARD_ASPECT_RATIO } from './CardPreview';
+import { useCardWidth } from './CardShell';
+import { SwipeCarousel } from './SwipeCarousel';
 import { colors, radius, spacing } from '../theme';
 import type { Card } from '../types/database';
 
@@ -23,18 +14,10 @@ interface CardCarouselProps {
   onAddPress: () => void;
 }
 
-const GAP = spacing.md;
 const EDGE = spacing.lg;
 
 export function CardCarousel({ cards, isLoading = false, onCardPress, onAddPress }: CardCarouselProps) {
-  const { width } = useWindowDimensions();
-  const cardWidth = Math.min(width, 520) - EDGE * 2;
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  function handleScroll(event: NativeSyntheticEvent<NativeScrollEvent>) {
-    const index = Math.round(event.nativeEvent.contentOffset.x / (cardWidth + GAP));
-    if (index !== activeIndex) setActiveIndex(index);
-  }
+  const cardWidth = useCardWidth();
 
   // İlk yükleme sırasında "kart yok" boş durumunu bir anlığına göstermek yerine
   // kart şeklinde bir iskelet göster; reload sonrası ekran boşmuş hissi vermesin.
@@ -64,57 +47,18 @@ export function CardCarousel({ cards, isLoading = false, onCardPress, onAddPress
   }
 
   return (
-    <View>
-      <FlatList
-        data={cards}
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        keyExtractor={(card) => card.id}
-        snapToInterval={cardWidth + GAP}
-        decelerationRate="fast"
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <CardPreview card={item} width={cardWidth} onPress={() => onCardPress(item)} />
-        )}
-      />
-      {cards.length > 1 ? (
-        <View style={styles.dots}>
-          {cards.map((card, index) => (
-            <View
-              key={card.id}
-              style={[styles.dot, index === activeIndex && styles.dotActive]}
-            />
-          ))}
-        </View>
-      ) : null}
-    </View>
+    <SwipeCarousel
+      items={cards}
+      keyExtractor={(card) => card.id}
+      renderItem={(card, cardWidth) => (
+        <CardPreview card={card} width={cardWidth} onPress={() => onCardPress(card)} />
+      )}
+    />
   );
 }
 
 const styles = StyleSheet.create({
   pressed: { opacity: 0.9 },
-  listContent: {
-    paddingHorizontal: EDGE,
-    gap: GAP,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: spacing.xs,
-    marginTop: spacing.md,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.slate300,
-  },
-  dotActive: {
-    width: 18,
-    backgroundColor: colors.primary,
-  },
   emptyWrap: {
     paddingHorizontal: EDGE,
   },

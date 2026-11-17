@@ -1,7 +1,7 @@
 import { Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, radius, spacing } from '../theme';
+import { colors, inputField, radius, spacing } from '../theme';
 import type { TransactionType } from '../types/database';
 
 type CategoryOption = {
@@ -109,5 +109,5 @@ const styles = StyleSheet.create({
   itemLabelSelected: { color: colors.primary },
   customInputWrap: { marginTop: spacing.md },
   customLabel: { color: colors.slate500, fontSize: 12, marginBottom: spacing.xs },
-  customInput: { borderRadius: radius.md, padding: spacing.md, backgroundColor: colors.slate100, color: colors.slate800, fontSize: 14 },
+  customInput: { ...inputField },
 });

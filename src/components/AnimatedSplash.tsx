@@ -6,8 +6,15 @@ import * as SplashScreen from 'expo-splash-screen';
 import { colors } from '../theme';
 
 const LOGO = require('../../assets/images/fk-logo.png');
-/** app.json'daki expo-splash-screen "imageWidth" değeriyle aynı olmalı (geçiş kesintisiz görünsün). */
+/** Animasyondaki logonun tam boyutu. */
 const LOGO_SIZE = 220;
+/**
+ * app.json'daki expo-splash-screen "imageWidth" değeriyle aynı olmalı (geçiş kesintisiz görünsün).
+ * Android 12+ açılış simgesini 288dp'lik alanda 192dp çaplı bir daireyle kırpar; logo köşeleri
+ * kesilmesin diye yerel açılışta logo 144dp çizilir, animasyon onu buradan büyüterek açar.
+ */
+const NATIVE_LOGO_SIZE = 144;
+const START_SCALE = NATIVE_LOGO_SIZE / LOGO_SIZE;
 
 interface Props {
   onFinish: () => void;
@@ -102,8 +109,8 @@ export function AnimatedSplash({ onFinish }: Props) {
     const logoScale = (t: number) => {
       let s =
         t < T.flash
-          ? lerp(1, 0.86, outQuad(seg(t, T.squeeze[0], T.squeeze[1])))
-          : lerp(0.86, 1, spring(seg(t, T.flash, T.flash + 0.75))) +
+          ? lerp(START_SCALE, START_SCALE * 0.86, outQuad(seg(t, T.squeeze[0], T.squeeze[1])))
+          : lerp(START_SCALE * 0.86, 1, spring(seg(t, T.flash, T.flash + 0.75))) +
             0.14 * Math.sin(Math.PI * seg(t, T.flash, T.flash + 0.22));
       s += 0.06 * Math.sin(Math.PI * seg(t, T.collapse[0], T.collapse[1]));
       return s;

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, radius, spacing } from '../theme';
+import { colors, inputField, inputFocused, inputLabel, spacing } from '../theme';
 import { formatCurrency } from '../lib/format';
 import { formatMoneyInput, moneyValueToInput, parseMoneyInput } from '../lib/moneyInput';
 
@@ -31,6 +31,7 @@ export function InlineMoneyEditor({
   }
 
   async function handleSave() {
+    if (isSaving) return;
     const parsed = parseMoneyInput(draft);
     if (draft.trim() === '' || Number.isNaN(parsed) || parsed < 0) {
       setIsEditing(false);
@@ -46,67 +47,106 @@ export function InlineMoneyEditor({
     return (
       <View style={styles.wrapper}>
         <Text style={styles.label}>{label}</Text>
-        <View style={styles.editRow}>
-          <TextInput
-            style={styles.input}
-            value={draft}
-            onChangeText={(nextValue) => setDraft(formatMoneyInput(nextValue))}
-            keyboardType="decimal-pad"
-            autoFocus
-            placeholder="0"
-            placeholderTextColor={colors.slate400}
-          />
-          {isSaving ? (
-            <ActivityIndicator color={colors.navy} style={styles.actionIcon} />
-          ) : (
-            <>
-              <Pressable onPress={handleSave} hitSlop={8} style={styles.actionIcon}>
-                <Ionicons name="checkmark-circle" size={26} color={colors.income} />
-              </Pressable>
-              <Pressable onPress={() => setIsEditing(false)} hitSlop={8} style={styles.actionIcon}>
-                <Ionicons name="close-circle" size={26} color={colors.slate400} />
-              </Pressable>
-            </>
-          )}
+        <TextInput
+          style={[styles.input, inputFocused]}
+          value={draft}
+          onChangeText={(nextValue) => setDraft(formatMoneyInput(nextValue))}
+          onSubmitEditing={handleSave}
+          keyboardType="decimal-pad"
+          returnKeyType="done"
+          autoFocus
+          selectTextOnFocus
+          placeholder="0"
+          placeholderTextColor={colors.slate400}
+        />
+        <View style={styles.actions}>
+          <Pressable
+            onPress={() => setIsEditing(false)}
+            disabled={isSaving}
+            accessibilityRole="button"
+            accessibilityLabel="Vazgeç"
+            style={({ pressed }) => [styles.cancelButton, pressed && styles.pressed]}
+          >
+            <Ionicons name="close" size={22} color={colors.slate600} />
+          </Pressable>
+          <Pressable
+            onPress={handleSave}
+            disabled={isSaving}
+            accessibilityRole="button"
+            accessibilityLabel="Kaydet"
+            style={({ pressed }) => [styles.saveButton, pressed && styles.pressed]}
+          >
+            {isSaving ? (
+              <ActivityIndicator color={colors.white} />
+            ) : (
+              <>
+                <Ionicons name="checkmark" size={22} color={colors.white} />
+                <Text style={styles.saveText} numberOfLines={1}>Kaydet</Text>
+              </>
+            )}
+          </Pressable>
         </View>
       </View>
     );
   }
 
   return (
-    <Pressable style={styles.wrapper} onPress={startEditing}>
-      <Text style={styles.label}>{label}</Text>
-      <View style={styles.displayRow}>
-        {value != null ? (
-          <Text style={[styles.value, emphasis && styles.valueEmphasis]}>
-            {formatCurrency(value)}
-          </Text>
-        ) : (
-          <Text style={styles.placeholder}>{placeholder}</Text>
-        )}
-        <Ionicons name="pencil" size={14} color={colors.slate400} style={styles.pencil} />
+    <Pressable
+      style={({ pressed }) => [styles.wrapper, pressed && styles.pressed]}
+      onPress={startEditing}
+      accessibilityRole="button"
+      accessibilityLabel={`${label} düzenle`}
+    >
+      <View style={styles.labelRow}>
+        <Text style={styles.label} numberOfLines={1}>{label}</Text>
+        <View style={styles.editBadge}>
+          <Ionicons name="pencil" size={13} color={colors.primary} />
+        </View>
       </View>
+      {value != null ? (
+        <Text
+          style={[styles.value, emphasis && styles.valueEmphasis, { fontSize: valueFontSize(formatCurrency(value), emphasis) }]}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.6}
+        >
+          {formatCurrency(value)}
+        </Text>
+      ) : (
+        <Text style={styles.placeholder}>{placeholder}</Text>
+      )}
     </Pressable>
   );
+}
+
+// Uzun tutarlar "50.000,0..." diye kesilmesin: karakter sayısına göre küçült.
+function valueFontSize(text: string, emphasis: boolean) {
+  const base = emphasis ? 20 : 18;
+  if (text.length > 16) return base - 5;
+  if (text.length > 13) return base - 3;
+  return base;
 }
 
 const styles = StyleSheet.create({
   wrapper: {
     flex: 1,
   },
-  label: {
-    fontSize: 12,
-    color: colors.slate500,
+  pressed: {
+    opacity: 0.85,
   },
-  displayRow: {
+  label: {
+    ...inputLabel,
+    flexShrink: 1,
+  },
+  labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginTop: spacing.xs,
-    gap: spacing.xs,
+    gap: spacing.sm,
   },
   value: {
+    marginTop: 2,
     fontSize: 18,
-    fontWeight: '700',
+    fontWeight: '800',
     color: colors.slate800,
   },
   valueEmphasis: {
@@ -114,31 +154,56 @@ const styles = StyleSheet.create({
     color: colors.navy,
   },
   placeholder: {
+    marginTop: 2,
     fontSize: 15,
     color: colors.slate400,
     fontStyle: 'italic',
   },
-  pencil: {
-    marginTop: 2,
-  },
-  editRow: {
-    flexDirection: 'row',
+  editBadge: {
+    width: 26,
+    height: 26,
+    borderRadius: 9,
+    backgroundColor: colors.primaryLight,
     alignItems: 'center',
-    marginTop: spacing.xs,
-    gap: spacing.xs,
+    justifyContent: 'center',
   },
   input: {
-    flex: 1,
-    borderWidth: 1,
-    borderColor: colors.navy,
-    borderRadius: radius.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: spacing.xs,
-    fontSize: 15,
-    color: colors.slate800,
-    backgroundColor: colors.white,
+    ...inputField,
+    marginTop: spacing.sm,
+    fontSize: 20,
+    fontWeight: '700',
   },
-  actionIcon: {
-    marginLeft: spacing.xs,
+  actions: {
+    flexDirection: 'row',
+    gap: spacing.sm,
+    marginTop: spacing.sm,
+  },
+  cancelButton: {
+    width: 46,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: colors.slate100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  saveButton: {
+    flex: 1,
+    height: 46,
+    borderRadius: 14,
+    backgroundColor: colors.income,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    shadowColor: colors.income,
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 3,
+  },
+  saveText: {
+    color: colors.white,
+    fontSize: 15,
+    fontWeight: '800',
   },
 });

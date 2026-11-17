@@ -1,17 +1,28 @@
+import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, inputField, inputFocused, inputLabel, spacing } from '../theme';
 
 interface FormFieldProps extends TextInputProps {
   label: string;
 }
 
-export function FormField({ label, style, ...inputProps }: FormFieldProps) {
+export function FormField({ label, style, onFocus, onBlur, ...inputProps }: FormFieldProps) {
+  const [focused, setFocused] = useState(false);
+
   return (
     <View style={styles.wrapper}>
-      <Text style={typography.caption}>{label}</Text>
+      <Text style={[styles.label, focused && styles.labelFocused]}>{label}</Text>
       <TextInput
-        style={[styles.input, style]}
+        style={[styles.input, focused && inputFocused, style]}
         placeholderTextColor={colors.slate400}
+        onFocus={(event) => {
+          setFocused(true);
+          onFocus?.(event);
+        }}
+        onBlur={(event) => {
+          setFocused(false);
+          onBlur?.(event);
+        }}
         {...inputProps}
       />
     </View>
@@ -21,16 +32,15 @@ export function FormField({ label, style, ...inputProps }: FormFieldProps) {
 const styles = StyleSheet.create({
   wrapper: {
     marginTop: spacing.md,
-    gap: spacing.xs,
+    gap: 6,
+  },
+  label: {
+    ...inputLabel,
+  },
+  labelFocused: {
+    color: colors.primary,
   },
   input: {
-    borderWidth: 1,
-    borderColor: colors.slate200,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    fontSize: 15,
-    color: colors.slate800,
-    backgroundColor: colors.slate50,
+    ...inputField,
   },
 });

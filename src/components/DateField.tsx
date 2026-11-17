@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Platform, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, inputField, inputLabel, spacing } from '../theme';
 import { formatDate } from '../lib/format';
 
 interface DateFieldProps {
@@ -32,7 +32,7 @@ export function DateField({ label, value, onChange, allowFuture = false }: DateF
   if (Platform.OS === 'web') {
     return (
       <View style={styles.wrapper}>
-        <Text style={typography.caption}>{label}</Text>
+        <Text style={styles.label}>{label}</Text>
         <TextInput
           style={styles.input}
           value={webDraft}
@@ -50,7 +50,7 @@ export function DateField({ label, value, onChange, allowFuture = false }: DateF
 
   return (
     <View style={styles.wrapper}>
-      <Text style={typography.caption}>{label}</Text>
+      <Text style={styles.label}>{label}</Text>
       {Platform.OS === 'android' ? (
         <Pressable style={styles.input} onPress={() => setIsPickerVisible(true)}>
           <Text style={styles.buttonText}>{formatDate(value)}</Text>
@@ -73,20 +73,9 @@ export function DateField({ label, value, onChange, allowFuture = false }: DateF
 const styles = StyleSheet.create({
   wrapper: {
     marginTop: spacing.md,
-    gap: spacing.sm,
+    gap: 6,
   },
-  input: {
-    borderWidth: 1,
-    borderColor: colors.slate200,
-    borderRadius: radius.md,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    fontSize: 15,
-    color: colors.slate800,
-    backgroundColor: colors.slate50,
-  },
-  buttonText: {
-    fontSize: 15,
-    color: colors.slate800,
-  },
+  input: { ...inputField, justifyContent: 'center' },
+  buttonText: { fontSize: 16, color: colors.slate800 },
+  label: { ...inputLabel },
 });

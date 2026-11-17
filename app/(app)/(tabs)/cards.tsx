@@ -8,14 +8,17 @@ import { formatCurrency, formatDate } from '@/src/lib/format';
 import { DEBT_CATEGORIES } from '@/src/lib/debtCategories';
 import { hasPaymentPlan, nextInstallmentAmount } from '@/src/lib/paymentSchedule';
 import { AppHeader } from '@/src/components/AppHeader';
+import { Enter, PressableScale, useFocusEntrance } from '@/src/components/motion';
+import { HeroTile } from '@/src/components/HeroTile';
 import { CardCarousel } from '@/src/components/CardCarousel';
 import { AccountCard } from '@/src/components/AccountCard';
+import { SwipeCarousel } from '@/src/components/SwipeCarousel';
 import { InlineMoneyEditor } from '@/src/components/InlineMoneyEditor';
 import { useAccountsStore } from '@/src/store/useAccountsStore';
 import { useCardsStore } from '@/src/store/useCardsStore';
 import { usePersonalDebtsStore } from '@/src/store/usePersonalDebtsStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
-import { colors, spacing } from '@/src/theme';
+import { colors, spacing, iconTile, surface } from '@/src/theme';
 
 type WalletTab = 'cards' | 'accounts' | 'debts';
 
@@ -55,58 +58,69 @@ export default function WalletScreen() {
   const openDebts = useMemo(() => debts.filter((debt) => !debt.is_paid), [debts]);
   const debtTotal = useMemo(() => openDebts.reduce((sum, debt) => sum + Number(debt.amount), 0), [openDebts]);
 
+  const entrance = useFocusEntrance(activeTab);
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView ref={scrollRef} style={styles.flex} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <View style={styles.header}><AppHeader /></View>
+        <Enter time={entrance} index={0} style={styles.header}><AppHeader /></Enter>
 
-        <View style={styles.tabs}>
+        <Enter time={entrance} index={1} style={styles.tabs}>
           {tabs.map((tab) => {
             const selected = activeTab === tab.id;
             return <Pressable key={tab.id} onPress={() => setActiveTab(tab.id)} style={[styles.tab, selected && styles.tabSelected]}><Text style={[styles.tabText, selected && styles.tabTextSelected]}>{tab.label}</Text></Pressable>;
           })}
-        </View>
+        </Enter>
 
         {activeTab === 'cards' ? (
           <>
-            <WalletSummary icon="card-outline" title="Toplam kart borcu" value={formatCurrency(cardDebt)} caption={cards.length ? `${cards.length} kart` : 'Kart ekle'} tone="blue" />
-            <View style={styles.carouselWrap}>
+            <Enter time={entrance} index={2}><WalletSummary icon="card-outline" title="Toplam kart borcu" value={formatCurrency(cardDebt)} caption={cards.length ? `${cards.length} kart` : 'Kart ekle'} tone="blue" /></Enter>
+            <Enter time={entrance} index={3} style={styles.carouselWrap}>
               <CardCarousel cards={cards} isLoading={isLoadingCards} onCardPress={(card) => router.push(`/card/${card.id}`)} onAddPress={() => router.push('/card/new')} />
-            </View>
+            </Enter>
+            {cards.length > 0 ? <AddButton title="Kart ekle" onPress={() => router.push('/card/new')} /> : null}
           </>
         ) : null}
 
         {activeTab === 'accounts' ? (
           <>
-            <WalletSummary icon="business-outline" title="Toplam hesap bakiyesi" value={formatCurrency(accountBalance + cashBalance)} caption={accounts.length ? `${accounts.length} hesap + nakit` : 'Nakit'} tone="blue" />
-            <View style={styles.cashBox}>
+            <Enter time={entrance} index={2}><WalletSummary icon="business-outline" title="Toplam hesap bakiyesi" value={formatCurrency(accountBalance + cashBalance)} caption={accounts.length ? `${accounts.length} hesap + nakit` : 'Nakit'} tone="blue" /></Enter>
+            <Enter time={entrance} index={3} style={styles.cashBox}>
               <View style={[styles.itemIcon, styles.cashIcon]}><Ionicons name="cash-outline" size={22} color={colors.income} /></View>
               <View style={styles.cashEditor}>
                 <InlineMoneyEditor label="Nakit (elimdeki)" value={cashBalance} placeholder="Nakit gir" onSave={updateCashBalance} />
               </View>
-            </View>
-            <Text style={styles.cashHint}>"Nakit olarak tut" seçtiğin gelirler buraya eklenir. Harcadıkça tutarı güncelleyebilirsin.</Text>
-            <View style={styles.accountCards}>{accounts.map((account) => (
-              <AccountCard
-                key={account.id}
-                account={account}
-                onPress={() => router.push(`/account/${account.id}/edit` as never)}
-              />
-            ))}</View>
+            </Enter>
+            <Enter time={entrance} index={4}><Text style={styles.cashHint}>"Nakit olarak tut" seçtiğin gelirler buraya eklenir. Harcadıkça tutarı güncelleyebilirsin.</Text></Enter>
+            {accounts.length > 0 ? (
+              <Enter time={entrance} index={5} style={styles.carouselWrap}>
+                <SwipeCarousel
+                  items={accounts}
+                  keyExtractor={(account) => account.id}
+                  renderItem={(account, cardWidth) => (
+                    <AccountCard
+                      account={account}
+                      width={cardWidth}
+                      onPress={() => router.push(`/account/${account.id}/edit` as never)}
+                    />
+                  )}
+                />
+              </Enter>
+            ) : null}
             <AddButton title="Hesap ekle" onPress={() => router.push('/account/new')} />
           </>
         ) : null}
 
         {activeTab === 'debts' ? (
           <>
-            <WalletSummary icon="people-outline" title="Toplam borç" value={formatCurrency(debtTotal)} caption={openDebts.length ? `${openDebts.length} açık borç` : 'Açık borç yok'} tone="red" />
-            <View style={styles.list}>{openDebts.map((debt) => {
+            <Enter time={entrance} index={2}><WalletSummary icon="people-outline" title="Toplam borç" value={formatCurrency(debtTotal)} caption={openDebts.length ? `${openDebts.length} açık borç` : 'Açık borç yok'} tone="red" /></Enter>
+            <View style={styles.list}>{openDebts.map((debt, i) => {
               const meta = DEBT_CATEGORIES[debt.category ?? 'other'];
               const plan = hasPaymentPlan(debt) ? debt : null;
               return (
-                <Pressable
-                  key={debt.id}
-                  style={({ pressed }) => [styles.debtCard, pressed && styles.pressed]}
+                <Enter key={debt.id} time={entrance} index={3 + i}>
+                <PressableScale
+                  innerStyle={styles.debtCard}
                   onPress={() => router.push((plan ? `/debt/${debt.id}` : `/debt/${debt.id}/edit`) as never)}
                 >
                   <View style={styles.debtRow}>
@@ -126,7 +140,8 @@ export default function WalletScreen() {
                       {plan.installment_count ? <Text style={styles.debtFooterText}>{plan.paid_installments}/{plan.installment_count}</Text> : null}
                     </View>
                   ) : null}
-                </Pressable>
+                </PressableScale>
+                </Enter>
               );
             })}</View>
             <AddButton title="Borç ekle" onPress={() => router.push('/debt/new')} />
@@ -138,32 +153,29 @@ export default function WalletScreen() {
 }
 
 function WalletSummary({ icon, title, value, caption, tone }: { icon: keyof typeof Ionicons.glyphMap; title: string; value: string; caption: string; tone: 'blue' | 'red' }) {
-  const color = tone === 'red' ? colors.overdue : colors.primary;
-  const background = tone === 'red' ? colors.overdueBg : colors.primaryLight;
-  return <View style={styles.summary}><View style={[styles.summaryIcon, { backgroundColor: background }]}><Ionicons name={icon} size={26} color={color} /></View><View><Text style={styles.summaryLabel}>{title}</Text><Text style={[styles.summaryValue, tone === 'red' && styles.summaryValueRed]}>{value}</Text><Text style={styles.summaryCaption}>{caption}</Text></View></View>;
+  return <HeroTile tone={tone} icon={icon} label={title} value={value} caption={caption} style={styles.summary} />;
 }
 
 function AddButton({ title, onPress }: { title: string; onPress: () => void }) {
-  return <Pressable style={({ pressed }) => [styles.addButton, pressed && styles.pressed]} onPress={onPress}><Ionicons name="add" size={20} color={colors.primary} /><Text style={styles.addButtonText}>{title}</Text></Pressable>;
+  return <PressableScale innerStyle={styles.addButton} onPress={onPress}><Ionicons name="add" size={20} color={colors.primary} /><Text style={styles.addButtonText}>{title}</Text></PressableScale>;
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: colors.background }, flex: { flex: 1 }, container: { padding: spacing.lg, paddingBottom: spacing.xxl }, pressed: { opacity: 0.72 },
   header: { marginBottom: spacing.lg },
-  tabs: { flexDirection: 'row', padding: 3, borderRadius: 9, backgroundColor: '#e8f0ff', marginBottom: spacing.md }, tab: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 7 }, tabSelected: { backgroundColor: colors.primary }, tabText: { color: '#5f7190', fontSize: 11, fontWeight: '700' }, tabTextSelected: { color: colors.white },
-  summary: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: 12, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4', marginBottom: spacing.md }, summaryIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' }, summaryLabel: { color: '#61738f', fontSize: 11, fontWeight: '600' }, summaryValue: { color: '#112c59', fontSize: 21, fontWeight: '800', marginTop: 1 }, summaryValueRed: { color: colors.overdue }, summaryCaption: { color: '#8291a8', fontSize: 11, marginTop: 1 },
-  carouselWrap: { marginHorizontal: -spacing.lg }, list: { gap: spacing.sm },
-  itemIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' }, itemCopy: { flex: 1, minWidth: 0 }, itemTitle: { color: '#112c59', fontSize: 14, fontWeight: '800' }, itemLabel: { color: '#71819c', fontSize: 11, marginTop: 2 },
-  debtCard: { borderRadius: 12, padding: spacing.md, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
+  tabs: { flexDirection: 'row', padding: 4, borderRadius: 14, backgroundColor: '#e9effa', marginBottom: spacing.lg }, tab: { flex: 1, paddingVertical: 9, alignItems: 'center', borderRadius: 11 }, tabSelected: { backgroundColor: colors.primary, shadowColor: colors.primary, shadowOpacity: 0.35, shadowRadius: 8, elevation: 3 }, tabText: { color: '#5f7190', fontSize: 12, fontWeight: '700' }, tabTextSelected: { color: colors.white },
+  summary: { marginBottom: spacing.lg }, summaryIcon: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center' }, summaryLabel: { color: '#61738f', fontSize: 11, fontWeight: '600' }, summaryValue: { color: '#112c59', fontSize: 21, fontWeight: '800', marginTop: 1 }, summaryValueRed: { color: colors.overdue }, summaryCaption: { color: '#8291a8', fontSize: 11, marginTop: 1 },
+  carouselWrap: { marginHorizontal: -spacing.lg }, list: { gap: 12 },
+  itemIcon: { ...iconTile }, itemCopy: { flex: 1, minWidth: 0 }, itemTitle: { color: '#112c59', fontSize: 14, fontWeight: '800' }, itemLabel: { color: '#71819c', fontSize: 11, marginTop: 2 },
+  debtCard: { ...surface, padding: 14 },
   debtRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   debtAmount: { color: '#112c59', fontSize: 15, fontWeight: '800', maxWidth: '40%' },
   debtFooter: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm, marginTop: spacing.sm, paddingTop: spacing.sm, borderTopWidth: 1, borderColor: '#edf1f7' },
   debtFooterText: { color: '#71819c', fontSize: 11, flexShrink: 1 },
   debtFooterStrong: { color: '#112c59', fontWeight: '700' },
-  cashBox: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: 12, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
+  cashBox: { ...surface, flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: 14 },
   cashIcon: { backgroundColor: colors.incomeBg },
   cashEditor: { flex: 1 },
   cashHint: { color: '#8291a8', fontSize: 11, marginTop: spacing.xs, marginBottom: spacing.md },
-  accountCards: { gap: spacing.md },
-  addButton: { marginTop: spacing.md, minHeight: 42, borderRadius: 9, borderWidth: 1.5, borderColor: colors.primary, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, backgroundColor: colors.white }, addButtonText: { color: colors.primary, fontSize: 14, fontWeight: '800' },
+  addButton: { marginTop: spacing.lg, minHeight: 50, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: '#93b4f5', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.xs, backgroundColor: '#f5f8ff' }, addButtonText: { color: colors.primary, fontSize: 14, fontWeight: '800' },
 });

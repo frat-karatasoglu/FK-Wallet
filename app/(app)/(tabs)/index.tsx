@@ -1,11 +1,13 @@
 import { useCallback, useMemo, useRef } from 'react';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Pressable, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AppHeader } from '@/src/components/AppHeader';
 import { CardCarousel } from '@/src/components/CardCarousel';
+import { Enter, PressableScale, useCountUp, useFocusEntrance } from '@/src/components/motion';
+import { HeroTile } from '@/src/components/HeroTile';
 import { computeCardDates } from '@/src/lib/cardDates';
 import { formatCurrency, formatShortDate, formatSignedCurrency } from '@/src/lib/format';
 import { useAuthStore } from '@/src/store/useAuthStore';
@@ -16,7 +18,7 @@ import { usePlannedPaymentsStore } from '@/src/store/usePlannedPaymentsStore';
 import { useTransactionsStore } from '@/src/store/useTransactionsStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { useAccessInfo } from '@/src/store/useSubscriptionStore';
-import { cardPalette, colors, radius, spacing } from '@/src/theme';
+import { cardPalette, colors, radius, spacing, iconTile, surface } from '@/src/theme';
 import type { Card, Transaction } from '@/src/types/database';
 
 const monthFormatter = new Intl.DateTimeFormat('tr-TR', { month: 'long', year: 'numeric' });
@@ -151,6 +153,8 @@ export default function DashboardScreen() {
   }
 
   const username = displayName(session?.user.user_metadata.display_name);
+  const entrance = useFocusEntrance();
+  const netWorthShown = useCountUp(totals.netWorth);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -161,9 +165,9 @@ export default function DashboardScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refresh} />}
       >
-        <View style={styles.header}><AppHeader /></View>
+        <Enter time={entrance} index={0} style={styles.header}><AppHeader /></Enter>
 
-        <View style={styles.greetingRow}>
+        <Enter time={entrance} index={1} style={styles.greetingRow}>
           <Text style={styles.greeting} numberOfLines={1} adjustsFontSizeToFit>
             Merhaba, {username}
           </Text>
@@ -184,13 +188,11 @@ export default function DashboardScreen() {
               />
             </Pressable>
           </View>
-        </View>
+        </Enter>
 
         {upcomingCard && upcomingDate ? (
-          <Pressable
-            style={({ pressed }) => [styles.paymentAlert, pressed && styles.pressed]}
-            onPress={() => goToCard(upcomingCard)}
-          >
+          <Enter time={entrance} index={2}>
+          <PressableScale innerStyle={styles.paymentAlert} onPress={() => goToCard(upcomingCard)}>
             <View style={styles.alertIcon}>
               <Ionicons name="calendar-outline" size={28} color="#b56d00" />
             </View>
@@ -204,7 +206,8 @@ export default function DashboardScreen() {
               {formatCurrency(upcomingCard.statement_amount ?? upcomingCard.current_balance)}
             </Text>
             <Ionicons name="chevron-forward" size={22} color={colors.slate400} />
-          </Pressable>
+          </PressableScale>
+          </Enter>
         ) : null}
 
         {access.status === 'trial' || access.status === 'expired' ? (
@@ -220,29 +223,35 @@ export default function DashboardScreen() {
           </Pressable>
         ) : null}
 
-        <View style={styles.netWorthCard}>
-          <Text style={styles.netWorthLabel}>Net Durum</Text>
-          <Text
-            style={[styles.netWorthValue, totals.netWorth < 0 && styles.netWorthValueNegative]}
-            numberOfLines={1}
-            adjustsFontSizeToFit
-          >
-            {formatSignedCurrency(totals.netWorth)}
-          </Text>
-          <Text style={styles.netWorthCaption}>Hesaplar + nakit − tüm borçlar</Text>
-        </View>
+        <Enter time={entrance} index={3} style={styles.heroWrap}>
+          <HeroTile
+            tone={totals.netWorth < 0 ? 'red' : 'navy'}
+            icon="wallet-outline"
+            label="Net Durum"
+            value={netWorthShown < 0 ? formatSignedCurrency(netWorthShown) : formatCurrency(netWorthShown)}
+            caption="Hesaplar + Nakit − Tüm Borçlar"
+          />
+        </Enter>
 
-        <SectionHeader title="Kartlarım" count={cards.length} action="Tümü" onPress={() => router.push('/cards')} />
+        <Enter time={entrance} index={4}>
+          <SectionHeader title="Kartlarım" count={cards.length} action="Tümü" onPress={() => router.push('/cards')} />
+        </Enter>
+        <Enter time={entrance} index={5}>
         <CardCarousel
           cards={cards}
           isLoading={isLoadingCards}
           onCardPress={goToCard}
           onAddPress={() => router.push('/card/new')}
         />
+        </Enter>
 
-        <Text style={styles.summaryHeading}>Bu ayın özeti</Text>
+        <Enter time={entrance} index={6}>
+          <Text style={styles.summaryHeading}>Bu ayın özeti</Text>
+        </Enter>
         <View style={styles.summaryGrid}>
           <SummaryCard
+            time={entrance}
+            index={7}
             title="Kart borcu"
             icon="card-outline"
             iconBackground={colors.primaryLight}
@@ -252,6 +261,8 @@ export default function DashboardScreen() {
             onPress={() => router.push('/cards')}
           />
           <SummaryCard
+            time={entrance}
+            index={8}
             title="Borçlarım"
             icon="people-outline"
             iconBackground="#ffe5e8"
@@ -261,6 +272,8 @@ export default function DashboardScreen() {
             onPress={() => router.push('/debts')}
           />
           <SummaryCard
+            time={entrance}
+            index={9}
             title="Hesaplarım"
             icon="wallet-outline"
             iconBackground="#e3e8ff"
@@ -274,6 +287,8 @@ export default function DashboardScreen() {
             onPress={() => router.push('/accounts')}
           />
           <SummaryCard
+            time={entrance}
+            index={10}
             title="Gelirim"
             icon="trending-up"
             iconBackground="#d9f7e9"
@@ -283,6 +298,8 @@ export default function DashboardScreen() {
             onPress={() => router.push('/income')}
           />
           <SummaryCard
+            time={entrance}
+            index={11}
             title="Giderim"
             icon="trending-down"
             iconBackground="#ffe5e8"
@@ -292,6 +309,8 @@ export default function DashboardScreen() {
             onPress={() => router.push('/expenses')}
           />
           <SummaryCard
+            time={entrance}
+            index={12}
             title="Planlanan"
             icon="calendar-outline"
             iconBackground="#fff0d7"
@@ -302,9 +321,11 @@ export default function DashboardScreen() {
           />
         </View>
 
-        <SectionHeader title="Son işlemler" action="Tümü" onPress={() => router.push('/expenses')} />
+        <Enter time={entrance} index={13}>
+          <SectionHeader title="Son işlemler" action="Tümü" onPress={() => router.push('/expenses')} />
+        </Enter>
         {transactions.length ? (
-          <View style={styles.transactions}>
+          <Enter time={entrance} index={14} style={styles.transactions}>
             {transactions.slice(0, 3).map((transaction) => (
               <RecentTransaction
                 key={transaction.id}
@@ -312,9 +333,11 @@ export default function DashboardScreen() {
                 onPress={() => router.push(`/transaction/${transaction.id}/edit`)}
               />
             ))}
-          </View>
+          </Enter>
         ) : (
-          <Text style={styles.emptyTransactions}>Henüz bu aya ait işlem yok.</Text>
+          <Enter time={entrance} index={14}>
+            <Text style={styles.emptyTransactions}>Henüz bu aya ait işlem yok.</Text>
+          </Enter>
         )}
       </ScrollView>
     </SafeAreaView>
@@ -338,7 +361,9 @@ function SectionHeader({ title, count, action, onPress }: { title: string; count
   );
 }
 
-function SummaryCard({ title, icon, iconBackground, iconColor, value, caption, onPress }: {
+function SummaryCard({ time, index, title, icon, iconBackground, iconColor, value, caption, onPress }: {
+  time: Animated.Value;
+  index: number;
   title: string;
   icon: keyof typeof Ionicons.glyphMap;
   iconBackground: string;
@@ -348,16 +373,18 @@ function SummaryCard({ title, icon, iconBackground, iconColor, value, caption, o
   onPress: () => void;
 }) {
   return (
-    <Pressable style={({ pressed }) => [styles.summaryCard, pressed && styles.pressed]} onPress={onPress}>
+    <Enter time={time} index={index} style={styles.summaryCell}>
+    <PressableScale innerStyle={styles.summaryCard} onPress={onPress}>
       <View style={[styles.summaryIcon, { backgroundColor: iconBackground }]}>
         <Ionicons name={icon} size={22} color={iconColor} />
       </View>
       <View style={styles.summaryCopy}>
-        <Text style={styles.summaryTitle} numberOfLines={2}>{title}</Text>
+        <Text style={styles.summaryTitle} numberOfLines={1}>{title}</Text>
         <Text style={styles.summaryValue} numberOfLines={1} adjustsFontSizeToFit>{value}</Text>
         <Text style={styles.summaryCaption} numberOfLines={1}>{caption}</Text>
       </View>
-    </Pressable>
+    </PressableScale>
+    </Enter>
   );
 }
 
@@ -398,20 +425,13 @@ const styles = StyleSheet.create({
   greeting: { flexShrink: 1, color: '#0f1d36', fontSize: 22, fontWeight: '800', letterSpacing: -0.4 },
   monthPicker: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs, borderWidth: 1, borderColor: '#dfe5f0', borderRadius: radius.full, paddingHorizontal: spacing.md, paddingVertical: 7 },
   monthText: { color: colors.navy, fontSize: 13, fontWeight: '600' },
-  paymentAlert: { marginHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md, borderRadius: radius.lg, backgroundColor: '#fff8e8' },
-  alertIcon: { width: 42, height: 42, borderRadius: 21, alignItems: 'center', justifyContent: 'center', backgroundColor: '#ffebc5' },
+  paymentAlert: { marginHorizontal: spacing.lg, flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: 14, borderRadius: 18, backgroundColor: '#fff8e8', borderWidth: 1, borderColor: '#fdeccb' },
+  alertIcon: { ...iconTile, width: 44, height: 44, borderRadius: 13, backgroundColor: '#ffebc5' },
   alertCopy: { flex: 1, minWidth: 0 },
   alertTitle: { color: '#17243c', fontSize: 14, fontWeight: '700' },
   alertSubtitle: { color: '#667795', fontSize: 12, marginTop: 2 },
   alertAmount: { color: '#0f1d36', fontSize: 15, fontWeight: '800', maxWidth: '30%' },
-  netWorthCard: {
-    marginHorizontal: spacing.lg,
-    borderRadius: radius.lg,
-    padding: spacing.lg,
-    backgroundColor: colors.white,
-    borderWidth: 1,
-    borderColor: '#e6eaf2',
-  },
+  heroWrap: { marginHorizontal: spacing.lg },
   trialBanner: {
     marginHorizontal: spacing.lg,
     marginBottom: spacing.md,
@@ -427,10 +447,6 @@ const styles = StyleSheet.create({
   trialBannerText: { flex: 1, color: colors.primary, fontSize: 13, fontWeight: '600' },
   trialBannerTextExpired: { color: colors.overdue },
   trialBannerAction: { color: colors.primary, fontSize: 13, fontWeight: '800' },
-  netWorthLabel: { color: '#63738d', fontSize: 12, fontWeight: '600' },
-  netWorthValue: { color: colors.income, fontSize: 26, fontWeight: '800', marginTop: 2 },
-  netWorthValueNegative: { color: colors.overdue },
-  netWorthCaption: { color: '#8794aa', fontSize: 11, marginTop: 2 },
   sectionHeader: { paddingHorizontal: spacing.lg, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   titleWithCount: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm },
   sectionTitle: { color: '#0f1d36', fontSize: 20, fontWeight: '800', letterSpacing: -0.3 },
@@ -438,16 +454,17 @@ const styles = StyleSheet.create({
   sectionAction: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   sectionActionText: { color: colors.primary, fontSize: 13, fontWeight: '700' },
   summaryHeading: { color: '#0f1d36', fontSize: 20, fontWeight: '800', letterSpacing: -0.3, paddingHorizontal: spacing.lg },
-  summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.lg },
-  summaryCard: { flexBasis: '100%', minHeight: 72, borderRadius: 14, padding: spacing.md, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e6eaf2', flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  summaryIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
-  summaryCopy: { flex: 1, minWidth: 0 },
-  summaryTitle: { color: '#455675', fontSize: 12, fontWeight: '500' },
-  summaryValue: { color: '#0f1d36', fontSize: 17, fontWeight: '800', marginTop: 1 },
+  summaryGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, paddingHorizontal: spacing.lg },
+  summaryCell: { flexBasis: '47%', flexGrow: 1 },
+  summaryCard: { ...surface, minHeight: 124, padding: 14 },
+  summaryIcon: { ...iconTile },
+  summaryCopy: { marginTop: 12, minWidth: 0 },
+  summaryTitle: { color: '#64748b', fontSize: 12.5, fontWeight: '600' },
+  summaryValue: { color: '#0f1d36', fontSize: 18, fontWeight: '800', marginTop: 2 },
   summaryCaption: { color: '#74849e', fontSize: 11, marginTop: 1 },
-  transactions: { marginHorizontal: spacing.lg, borderRadius: radius.lg, overflow: 'hidden', borderWidth: 1, borderColor: '#e6eaf2', backgroundColor: colors.white },
+  transactions: { ...surface, marginHorizontal: spacing.lg, overflow: 'hidden' },
   transactionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, padding: spacing.md },
-  transactionIcon: { width: 40, height: 40, borderRadius: 20, alignItems: 'center', justifyContent: 'center' },
+  transactionIcon: { ...iconTile },
   transactionCopy: { flex: 1, minWidth: 0 },
   transactionTitle: { color: '#17243c', fontSize: 14, fontWeight: '700' },
   transactionSubtitle: { color: '#74849e', fontSize: 11, marginTop: 2 },

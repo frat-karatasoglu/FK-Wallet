@@ -8,7 +8,8 @@ import { useAuthStore } from '@/src/store/useAuthStore';
 import { useAccessInfo } from '@/src/store/useSubscriptionStore';
 import { useSettingsStore } from '@/src/store/useSettingsStore';
 import { CURRENCY_OPTIONS, type CurrencyCode } from '@/src/lib/format';
-import { colors, spacing } from '@/src/theme';
+import { colors, spacing, iconTile, surface } from '@/src/theme';
+import { Enter, PressableScale, useFocusEntrance } from '@/src/components/motion';
 
 const LEAD_DAY_OPTIONS = [1, 2, 3, 5, 7];
 
@@ -69,12 +70,14 @@ export default function SettingsScreen() {
     await signOut();
   }
 
+  const entrance = useFocusEntrance();
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView style={styles.flex} contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Text style={styles.pageTitle}>Ayarlar</Text>
+        <Enter time={entrance} index={0}><Text style={styles.pageTitle}>Ayarlar</Text></Enter>
 
-        <View style={styles.accountCard}>
+        <Enter time={entrance} index={1} style={styles.accountCard}>
           <Text style={styles.cardHeading}>Hesabım</Text>
           <View style={styles.accountRow}>
             <View style={styles.avatar}><Text style={styles.avatarText}>{initials}</Text></View>
@@ -83,10 +86,10 @@ export default function SettingsScreen() {
               <Text style={styles.email} numberOfLines={1}>{session?.user.email}</Text>
             </View>
           </View>
-        </View>
+        </Enter>
 
         {access.status !== 'free' ? (
-        <View style={styles.subscriptionCard}>
+        <Enter time={entrance} index={2} style={styles.subscriptionCard}>
           <View style={styles.reminderHeader}>
             <View style={[styles.reminderIcon, access.status === 'premium' && styles.premiumIcon]}>
               <Ionicons name="diamond-outline" size={20} color={access.status === 'premium' ? colors.white : colors.primary} />
@@ -111,10 +114,10 @@ export default function SettingsScreen() {
               <Text style={styles.subscriptionButtonText}>Premium’a geç</Text>
             </Pressable>
           )}
-        </View>
+        </Enter>
         ) : null}
 
-        <View style={styles.reminderCard}>
+        <Enter time={entrance} index={3} style={styles.reminderCard}>
           <View style={styles.reminderHeader}>
             <View style={styles.reminderIcon}><Ionicons name="notifications-outline" size={20} color={colors.primary} /></View>
             <View style={styles.reminderTitleWrap}>
@@ -156,9 +159,9 @@ export default function SettingsScreen() {
               </View>
             </>
           ) : null}
-        </View>
+        </Enter>
 
-        <View style={styles.currencyCard}>
+        <Enter time={entrance} index={4} style={styles.currencyCard}>
           <View style={styles.currencyHeader}>
             <View style={styles.currencyIcon}><Ionicons name="wallet-outline" size={18} color={colors.primary} /></View>
             <Text style={styles.currencyTitle}>Para birimi</Text>
@@ -180,16 +183,18 @@ export default function SettingsScreen() {
               );
             })}
           </View>
-        </View>
+        </Enter>
 
-        <Pressable
-          style={({ pressed }) => [styles.signOutButton, pressed && styles.pressed, isSigningOut && styles.disabled]}
+        <Enter time={entrance} index={5}>
+        <PressableScale
+          innerStyle={[styles.signOutButton, isSigningOut && styles.disabled]}
           onPress={handleSignOut}
           disabled={isSigningOut}
         >
           <Ionicons name="log-out-outline" size={18} color={colors.overdue} />
           <Text style={styles.signOutText}>{isSigningOut ? 'Çıkış yapılıyor...' : 'Çıkış Yap'}</Text>
-        </Pressable>
+        </PressableScale>
+        </Enter>
       </ScrollView>
     </SafeAreaView>
   );
@@ -202,16 +207,16 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.72 },
   disabled: { opacity: 0.5 },
   pageTitle: { color: '#0f2852', fontSize: 26, fontWeight: '800', letterSpacing: -0.5 },
-  accountCard: { padding: spacing.lg, borderRadius: 18, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
-  cardHeading: { color: '#112c59', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.4 },
+  accountCard: { ...surface, padding: spacing.lg },
+  cardHeading: { color: '#94a3b8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.8 },
   accountRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.md },
-  avatar: { width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primaryLight },
-  avatarText: { color: colors.primary, fontSize: 17, fontWeight: '800' },
+  avatar: { width: 50, height: 50, borderRadius: 16, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
+  avatarText: { color: colors.white, fontSize: 18, fontWeight: '800' },
   accountCopy: { flex: 1, minWidth: 0 },
   name: { color: '#112c59', fontSize: 16, fontWeight: '700' },
   email: { color: '#70819f', fontSize: 13, marginTop: 1 },
-  reminderCard: { padding: spacing.lg, borderRadius: 18, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
-  subscriptionCard: { padding: spacing.lg, borderRadius: 18, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4', marginBottom: spacing.md, gap: spacing.md },
+  reminderCard: { ...surface, padding: spacing.lg },
+  subscriptionCard: { ...surface, padding: spacing.lg, marginBottom: spacing.md, gap: spacing.md },
   premiumIcon: { backgroundColor: colors.income },
   expiredText: { color: colors.overdue },
   subscriptionButton: { minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.primary },
@@ -219,24 +224,24 @@ const styles = StyleSheet.create({
   subscriptionButtonOutline: { minHeight: 42, borderRadius: 12, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: colors.primary },
   subscriptionButtonOutlineText: { color: colors.primary, fontSize: 14, fontWeight: '700' },
   reminderHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  reminderIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f5ff' },
+  reminderIcon: { ...iconTile, backgroundColor: '#e8f0ff' },
   reminderTitleWrap: { flex: 1, minWidth: 0 },
   reminderTitle: { color: '#112c59', fontSize: 16, fontWeight: '700' },
   enabledText: { color: colors.primary, fontSize: 13, fontWeight: '600', marginTop: 2 },
   question: { color: '#70819f', fontSize: 13, fontWeight: '500', marginTop: spacing.lg },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginTop: spacing.sm },
-  dayChip: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 16, borderWidth: 1.5, borderColor: '#d6e0ef' },
-  currencyChip: { minWidth: 82, flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 16, borderWidth: 1.5, borderColor: '#d6e0ef' },
+  dayChip: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: '#d6e0ef' },
+  currencyChip: { minWidth: 82, flexGrow: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: '#d6e0ef' },
   dayChipSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
   dayChipText: { color: '#17315e', fontSize: 13, fontWeight: '600' },
   dayChipTextSelected: { color: colors.white },
   reminderDivider: { height: 1, backgroundColor: '#e6edf7', marginTop: spacing.lg },
   dayReminderRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, marginTop: spacing.md },
   dayReminderText: { flex: 1, color: '#70819f', fontSize: 13 },
-  currencyCard: { padding: spacing.lg, borderRadius: 18, backgroundColor: colors.white, borderWidth: 1, borderColor: '#e2e9f4' },
+  currencyCard: { ...surface, padding: spacing.lg },
   currencyHeader: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
-  currencyIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#f0f5ff' },
+  currencyIcon: { ...iconTile, backgroundColor: '#e8f0ff' },
   currencyTitle: { color: '#112c59', fontSize: 16, fontWeight: '700' },
-  signOutButton: { minHeight: 50, borderRadius: 16, borderWidth: 1.5, borderColor: colors.overdue, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: colors.white },
+  signOutButton: { minHeight: 52, borderRadius: 16, borderWidth: 1, borderColor: '#fecdd3', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm, backgroundColor: '#fff5f6' },
   signOutText: { color: colors.overdue, fontSize: 15, fontWeight: '700' },
 });

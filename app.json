@@ -37,7 +37,7 @@
         "expo-splash-screen",
         {
           "image": "./assets/images/fk-logo.png",
-          "imageWidth": 220,
+          "imageWidth": 144,
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
