@@ -34,6 +34,21 @@ Uygulama, kart son ödeme tarihleri ve planlanan ödemeler için cihazınızda y
 
 Hesabınızı ve tüm verilerinizi uygulama içinden silebilirsiniz: **Profil > Hesabımı Sil**. Bu işlem hesabınızı ve ona bağlı tüm kayıtları (kartlar, hesaplar, borçlar, gelir/gider kayıtları, planlanan ödemeler, profil bilgileri) sunucularımızdan kalıcı ve anında siler; geri alınamaz. Cihazınızda zamanlanmış hatırlatmalar da iptal edilir.
 
+### Hesabı silmeden bazı verileri silme
+
+Hesabınızı silmeden tek tek kayıtlarınızı da silebilirsiniz; silinen kayıt sunucularımızdan kalıcı ve anında kaldırılır, yedek veya kopya olarak saklanmaz:
+
+İlgili kaydı açıp düzenleme ekranındaki silme butonuna basmanız yeterlidir:
+
+- **Kart:** "Kartı Sil"
+- **Banka hesabı:** "Hesabı Sil"
+- **Borç / kredi:** "Borcu Sil"
+- **Gelir, gider veya kart ödemesi kaydı:** "Hareketi Sil"
+- **Planlı ödeme:** "Ödemeyi Sil"
+- **Görünen ad:** Profil ekranından değiştirilebilir.
+
+Hesap silindikten sonra hesabınıza ait hiçbir kişisel veri saklanmaz.
+
 Uygulamaya erişemiyorsanız silme talebinizi karatasoglufirat@gmail.com adresine, kayıtlı e-posta adresinizden gönderebilirsiniz; talebiniz en geç 30 gün içinde işleme alınır.
 
 ## İletişim
