@@ -42,7 +42,7 @@ export default function SignInScreen() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.brandRow}>
           <Image source={require('@/assets/images/fk-logo.png')} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.brand}>Cüzdanım</Text>
+          <Text style={styles.brand}>FK <Text style={styles.brandAccent}>Cüzdan</Text></Text>
         </View>
         <Text style={styles.subtitle}>Kartlarını ve harcamalarını tek yerden takip et</Text>
 
@@ -65,6 +65,13 @@ export default function SignInScreen() {
             autoComplete="password"
             placeholder="••••••••"
           />
+
+          <Link
+            href={{ pathname: '/forgot-password', params: email.trim() ? { email: email.trim() } : {} }}
+            style={styles.forgotLink}
+          >
+            <Text style={styles.forgotText}>Şifremi unuttum</Text>
+          </Link>
 
           {error ? <Text style={styles.error}>{error}</Text> : null}
 
@@ -98,6 +105,7 @@ const styles = StyleSheet.create({
     fontSize: 29,
     color: colors.navy,
   },
+  brandAccent: { color: '#0ea5e9' },
   brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   logo: { width: 48, height: 48 },
   subtitle: {
@@ -115,6 +123,15 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: spacing.xl,
+  },
+  forgotLink: {
+    alignSelf: 'flex-end',
+    marginTop: spacing.sm,
+  },
+  forgotText: {
+    color: colors.turquoise,
+    fontSize: 13,
+    fontWeight: '600',
   },
   switchLink: {
     marginTop: spacing.xl,

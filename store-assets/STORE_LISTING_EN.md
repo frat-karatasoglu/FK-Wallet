@@ -25,17 +25,23 @@ NEVER MISS A DUE DATE
 
 INCOME AND EXPENSE TRACKING
 • Record your salary and other income, and add it straight to an account if you like
-• Log your expenses by category
+• Log your expenses by category and choose whether you paid in cash, from an account or by credit card; balances update automatically
 • Compare monthly income and spending, and look back at previous months
 
 ACCOUNTS AND DEBTS
 • Keep track of your bank accounts and balances
 • Record rent, bills, loans or money you owe someone, sorted by category
-• See your net position (accounts minus all debts) on the home screen
+• See your net position (accounts + cash − all debts) on the home screen
+
+LOAN AND INSTALLMENT PLANS
+• Plan loan installments paid monthly or every 3, 6 or 12 months
+• Record each payment separately, even when the installment amount changes
+• See what you paid for each installment and how much is left in the payment history
+• Get a reminder before each installment is due
 
 PLANNED PAYMENTS
 • Plan recurring payments like internet, gym or insurance
-• Monthly payments roll over to the next month automatically once paid
+• Payments repeating monthly or every 3, 6 or 12 months roll over to the next period automatically once paid
 • Always know how many days are left
 
 SIMPLE AND CLEAR

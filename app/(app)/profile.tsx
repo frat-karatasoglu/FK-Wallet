@@ -19,6 +19,7 @@ export default function ProfileScreen() {
   const updateDisplayName = useAuthStore((s) => s.updateDisplayName);
   const signOut = useAuthStore((s) => s.signOut);
   const deleteAccount = useAuthStore((s) => s.deleteAccount);
+  const changePassword = useAuthStore((s) => s.changePassword);
 
   const currentName = displayName(session?.user.user_metadata.display_name);
   const [name, setName] = useState(currentName);
@@ -28,6 +29,12 @@ export default function ProfileScreen() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [newPasswordAgain, setNewPasswordAgain] = useState('');
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [passwordInfo, setPasswordInfo] = useState<string | null>(null);
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const initial = (name || session?.user.email || '?').charAt(0).toLocaleUpperCase('tr-TR');
 
@@ -43,6 +50,34 @@ export default function ProfileScreen() {
     setIsSaving(false);
     if (message) setError(message);
     else setInfo('Kaydedildi.');
+  }
+
+  async function handleChangePassword() {
+    setPasswordInfo(null);
+    if (!currentPassword || !newPassword) {
+      setPasswordError('Mevcut ve yeni şifreni gir.');
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError('Yeni şifre en az 6 karakter olmalı.');
+      return;
+    }
+    if (newPassword !== newPasswordAgain) {
+      setPasswordError('Yeni şifreler aynı değil.');
+      return;
+    }
+    setPasswordError(null);
+    setIsChangingPassword(true);
+    const message = await changePassword(currentPassword, newPassword);
+    setIsChangingPassword(false);
+    if (message) {
+      setPasswordError(message);
+      return;
+    }
+    setCurrentPassword('');
+    setNewPassword('');
+    setNewPasswordAgain('');
+    setPasswordInfo('Şifren değiştirildi.');
   }
 
   async function handleSignOut() {
@@ -99,6 +134,45 @@ export default function ProfileScreen() {
           title="Kaydet"
           onPress={handleSave}
           isLoading={isSaving}
+          style={styles.saveButton}
+        />
+      </View>
+
+      <View style={styles.section}>
+        <Text style={styles.sectionLabel}>Şifreyi değiştir</Text>
+        <FormField
+          label="Mevcut şifre"
+          value={currentPassword}
+          onChangeText={setCurrentPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          autoComplete="current-password"
+          placeholder="••••••••"
+        />
+        <FormField
+          label="Yeni şifre"
+          value={newPassword}
+          onChangeText={setNewPassword}
+          secureTextEntry
+          autoCapitalize="none"
+          autoComplete="password-new"
+          placeholder="En az 6 karakter"
+        />
+        <FormField
+          label="Yeni şifre (tekrar)"
+          value={newPasswordAgain}
+          onChangeText={setNewPasswordAgain}
+          secureTextEntry
+          autoCapitalize="none"
+          autoComplete="password-new"
+          placeholder="Şifreyi tekrar yaz"
+        />
+        {passwordError ? <Text style={styles.error}>{passwordError}</Text> : null}
+        {passwordInfo ? <Text style={styles.info}>{passwordInfo}</Text> : null}
+        <PrimaryButton
+          title="Şifreyi Değiştir"
+          onPress={handleChangePassword}
+          isLoading={isChangingPassword}
           style={styles.saveButton}
         />
       </View>

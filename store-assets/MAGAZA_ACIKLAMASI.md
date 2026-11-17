@@ -31,11 +31,17 @@ GELİR VE GİDER TAKİBİ
 HESAPLARIN VE BORÇLARIN
 • Banka hesaplarını ve bakiyelerini takip et
 • Kira, fatura, kredi ya da birine olan borçlarını kategorilere ayırarak kaydet
-• Net durumunu (hesaplar eksi tüm borçlar) ana sayfada gör
+• Net durumunu (hesaplar + nakit − tüm borçlar) ana sayfada gör
+
+KREDİ VE TAKSİT PLANLARI
+• Her ay, 3 ayda, 6 ayda ya da yılda bir ödenen kredi taksitlerini planla
+• Taksit tutarı değişse bile her ödemeyi ayrı kaydet
+• Ödeme geçmişinde hangi taksiti ne kadar ödediğini ve kalan borcunu gör
+• Taksit gününden önce hatırlatma bildirimi al
 
 PLANLI ÖDEMELER
 • İnternet, spor salonu, sigorta gibi düzenli ödemelerini planla
-• Aylık tekrar eden ödemeler ödendiğinde bir sonraki aya otomatik taşınır
+• Her ay, 3 ayda, 6 ayda ya da yılda bir tekrar eden ödemeler, ödendiğinde bir sonraki döneme otomatik taşınır
 • Kaç gün kaldığını her zaman bil
 
 SADE VE ANLAŞILIR

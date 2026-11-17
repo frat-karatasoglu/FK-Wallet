@@ -57,7 +57,7 @@ export default function SignUpScreen() {
       <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
         <View style={styles.brandRow}>
           <Image source={require('@/assets/images/fk-logo.png')} style={styles.logo} resizeMode="contain" />
-          <Text style={styles.brand}>Cüzdanım</Text>
+          <Text style={styles.brand}>FK <Text style={styles.brandAccent}>Cüzdan</Text></Text>
         </View>
         <Text style={styles.subtitle}>Yeni hesap oluştur</Text>
 
@@ -123,6 +123,7 @@ const styles = StyleSheet.create({
     fontSize: 29,
     color: colors.navy,
   },
+  brandAccent: { color: '#0ea5e9' },
   brandRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: spacing.sm },
   logo: { width: 48, height: 48 },
   subtitle: {
