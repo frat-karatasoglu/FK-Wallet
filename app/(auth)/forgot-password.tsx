@@ -1,14 +1,6 @@
 import { useState } from 'react';
-import {
-  Alert,
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { Link, useLocalSearchParams } from 'expo-router';
 
 import { useAuthStore } from '@/src/store/useAuthStore';

@@ -1,5 +1,6 @@
 import { useCallback, useRef, type ComponentProps, type ReactNode } from 'react';
-import { Animated, Easing, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useFocusEffect, useRouter, type Href } from 'expo-router';
@@ -90,8 +91,8 @@ export default function QuickAddScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <ScrollView contentContainerStyle={styles.container} showsVerticalScrollIndicator={false}>
-        <Animated.Text style={[styles.title, next()]}>Ne eklemek istersin?</Animated.Text>
-        <Animated.Text style={[styles.subtitle, next()]}>Bir işlem seç, saniyeler içinde kaydet.</Animated.Text>
+        <Animated.Text maxFontSizeMultiplier={1.2} style={[styles.title, next()]}>Ne eklemek istersin?</Animated.Text>
+        <Animated.Text maxFontSizeMultiplier={1.2} style={[styles.subtitle, next()]}>Bir işlem seç, saniyeler içinde kaydet.</Animated.Text>
 
         <View style={styles.bigRow}>
           {BIG_ACTIONS.map((a) => (
@@ -113,7 +114,7 @@ export default function QuickAddScreen() {
           ))}
         </View>
 
-        <Animated.Text style={[styles.sectionLabel, next()]}>DİĞER</Animated.Text>
+        <Animated.Text maxFontSizeMultiplier={1.2} style={[styles.sectionLabel, next()]}>DİĞER</Animated.Text>
         <View style={styles.grid}>
           {OTHER_ACTIONS.map((a) => (
             <Animated.View key={a.title} style={[styles.itemWrap, next()]}>
@@ -145,7 +146,7 @@ const styles = StyleSheet.create({
   bigRow: { flexDirection: 'row', gap: 12, marginTop: 22 },
   bigWrap: {
     flex: 1,
-    height: 156,
+    minHeight: 156,
     borderRadius: 22,
     backgroundColor: colors.white,
     shadowOpacity: 0.45,
@@ -171,7 +172,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between', rowGap: 12, marginTop: 10 },
   itemWrap: {
     width: '48.4%',
-    height: 118,
+    minHeight: 118,
     borderRadius: 18,
     backgroundColor: colors.white,
     shadowColor: '#0f172a',

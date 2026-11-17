@@ -70,6 +70,7 @@ export function CardShell({ color, width, onPress, children }: Props) {
 export const cardPillStyles = StyleSheet.create({
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
   pill: {
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,

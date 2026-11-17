@@ -1,4 +1,5 @@
-import { StyleSheet, Text, type TextStyle } from 'react-native';
+import { StyleSheet, type TextStyle } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { colors } from '../theme';
 import { formatCurrency, formatSignedCurrency } from '../lib/format';
 

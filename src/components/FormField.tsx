@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
+import { StyleSheet, View, type TextInputProps } from 'react-native';
+import { Text, TextInput } from '@/src/components/ScaledText';
 import { colors, inputField, inputFocused, inputLabel, spacing } from '../theme';
 
 interface FormFieldProps extends TextInputProps {

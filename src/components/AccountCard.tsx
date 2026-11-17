@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { Ionicons, MaterialIcons } from '@expo/vector-icons';
 
 import { colors, spacing } from '../theme';
@@ -47,14 +48,14 @@ export function AccountCard({ account, onPress, width }: AccountCardProps) {
       <View style={cardPillStyles.row}>
         <View style={cardPillStyles.pill}>
           <Ionicons name="wallet-outline" size={12} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.pillText}>
+          <Text style={styles.pillText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             <Text style={styles.pillLabel}>Tür </Text>
             Vadesiz
           </Text>
         </View>
         <View style={cardPillStyles.pill}>
           <View style={styles.activeDot} />
-          <Text style={styles.pillText}>
+          <Text style={styles.pillText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             <Text style={styles.pillLabel}>Durum </Text>
             Aktif
           </Text>
@@ -87,7 +88,7 @@ const styles = StyleSheet.create({
   lastFour: { color: colors.white, fontSize: 16, fontWeight: '700', letterSpacing: 2 },
   label: { color: 'rgba(255,255,255,0.7)', fontSize: 11 },
   balance: { color: colors.white, fontSize: 27, fontWeight: '800', marginTop: 2, letterSpacing: -0.5 },
-  pillText: { color: colors.white, fontSize: 11.5, fontWeight: '700' },
+  pillText: { flexShrink: 1, color: colors.white, fontSize: 11.5, fontWeight: '700' },
   pillLabel: { color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
   activeDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: '#4ade80' },
 });

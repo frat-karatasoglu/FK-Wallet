@@ -1,13 +1,6 @@
 import { useMemo, useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 
 import { FormField } from './FormField';
 import { PrimaryButton } from './PrimaryButton';

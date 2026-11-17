@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -73,14 +74,14 @@ export function CardPreview({ card, onPress, width }: CardPreviewProps) {
       <View style={cardPillStyles.row}>
         <View style={cardPillStyles.pill}>
           <Ionicons name="document-text-outline" size={12} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.pillText}>
+          <Text style={styles.pillText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             <Text style={styles.pillLabel}>Kesim </Text>
             {formatShortDate(nextStatementDate)}
           </Text>
         </View>
         <View style={cardPillStyles.pill}>
           <Ionicons name="alarm-outline" size={12} color="rgba(255,255,255,0.8)" />
-          <Text style={styles.pillText}>
+          <Text style={styles.pillText} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
             <Text style={styles.pillLabel}>Son ödeme </Text>
             {formatShortDate(nextDueDate)}
           </Text>
@@ -124,6 +125,6 @@ const styles = StyleSheet.create({
   label: { color: 'rgba(255,255,255,0.7)', fontSize: 11 },
   balance: { color: colors.white, fontSize: 27, fontWeight: '800', marginTop: 2, letterSpacing: -0.5 },
   limitValue: { color: colors.white, fontSize: 14, fontWeight: '700', marginTop: 2 },
-  pillText: { color: colors.white, fontSize: 11.5, fontWeight: '700' },
+  pillText: { flexShrink: 1, color: colors.white, fontSize: 11.5, fontWeight: '700' },
   pillLabel: { color: 'rgba(255,255,255,0.7)', fontWeight: '500' },
 });

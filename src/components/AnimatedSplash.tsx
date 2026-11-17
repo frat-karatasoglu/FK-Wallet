@@ -289,6 +289,7 @@ export function AnimatedSplash({ onFinish }: Props) {
       <View style={[styles.row, { top: cy + WORD_Y - 26 }]}>
         {[...WORD].map((ch, i) => (
           <Animated.Text
+            maxFontSizeMultiplier={1}
             key={i}
             style={[
               styles.word,
@@ -310,6 +311,7 @@ export function AnimatedSplash({ onFinish }: Props) {
       />
 
       <Animated.Text
+        maxFontSizeMultiplier={1}
         style={[
           styles.tag,
           { top: cy + WORD_Y + 52, opacity: anim.tagOpacity, transform: [{ translateY: anim.tagY }] },

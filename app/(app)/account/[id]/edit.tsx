@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { AccountForm } from '@/src/components/AccountForm';

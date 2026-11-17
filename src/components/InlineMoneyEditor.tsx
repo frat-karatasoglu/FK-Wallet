@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, View } from 'react-native';
+import { Text, TextInput } from '@/src/components/ScaledText';
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors, inputField, inputFocused, inputLabel, spacing } from '../theme';

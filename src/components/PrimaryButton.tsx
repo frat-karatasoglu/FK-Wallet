@@ -1,4 +1,5 @@
-import { ActivityIndicator, Pressable, StyleSheet, Text, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, type ViewStyle } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { colors, radius, spacing } from '../theme';
 
 interface PrimaryButtonProps {

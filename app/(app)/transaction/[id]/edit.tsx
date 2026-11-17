@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 
 import { useTransactionsStore } from '@/src/store/useTransactionsStore';

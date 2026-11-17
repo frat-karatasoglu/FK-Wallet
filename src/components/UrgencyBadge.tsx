@@ -1,4 +1,5 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 import { colors, radius, spacing } from '../theme';
 import { daysUntil, getUrgency } from '../lib/cardDates';
 

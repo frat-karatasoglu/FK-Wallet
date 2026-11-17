@@ -25,6 +25,7 @@ export default function TabsLayout() {
           { height: TAB_BAR_HEIGHT + insets.bottom, paddingBottom: Math.max(insets.bottom, 6) },
         ],
         tabBarLabelStyle: styles.tabLabel,
+        tabBarAllowFontScaling: false,
       }}
     >
       <Tabs.Screen

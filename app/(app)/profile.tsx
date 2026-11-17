@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from '@/src/components/ScaledText';
 
 import { useAuthStore } from '@/src/store/useAuthStore';
 import { SUBSCRIPTIONS_ENABLED } from '@/src/store/useSubscriptionStore';
